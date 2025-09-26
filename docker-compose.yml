@@ -1,0 +1,13 @@
+services:
+  db:
+    image: postgres:16
+    container_name: proyecto_web
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - ${PORT_OUT}:${PORT_IN}
+    volumes:
+      - ${DB_VOLUME_PATH}:/var/lib/postgresql/data
