@@ -14,9 +14,10 @@ La idea de utilizacion de la pagina web es la siguiente:
 
 La implementacion de estos pasos aun no se ha hecho, ya que pertenecen a etapas posteriores de este proyecto.
 
+
 Como ejecutar el servidor web del practico 1:
-  1. En la CLI: go run main.go handlers.go
+  1. En el directorio /ProyectoWeb, abrir CLI y ejecutar comando: go run main.go handlers.go
   2. En su navegador de confianza: http://localhost:8080/
 
 Como generar los archivos del sqlc (ya estan generados, pero si se quisieran regenerar) del practico 2:
-  1. En la CLI: sqlc generate
+  1. En el directorio /ProyectoWeb, abrir CLI y ejecutar comando: sqlc generate
