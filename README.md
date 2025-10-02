@@ -14,6 +14,10 @@ La idea de utilizacion de la pagina web es la siguiente:
 
 La implementacion de estos pasos aun no se ha hecho, ya que pertenecen a etapas posteriores de este proyecto.
 
+Estructura del proyecto:
+  - Subdirectorio db: contiene el subdirectorio queries (incluye queries sobre las tablas usuario y partido) y el subdirectorio schema (define el esquema de la base de datos)
+  - Subdirectorio static: aqui se encuentra el archivo index.html y su respectivo style.css, que se presentan en el root (/) de la pagina web.
+  - Directorio princpial: main.go y handlers.go, se utilizan para correr el servidor. El archivo docker-compose.yml se utiliza, por el momento, solo para levantar una imagen de postgresql en docker. El archivo sqlc.yaml se utiliza para ejecutar el       sqlc generate.
 
 Como ejecutar el servidor web del practico 1:
   1. En el directorio /ProyectoWeb, abrir CLI y ejecutar comando: go run main.go handlers.go
