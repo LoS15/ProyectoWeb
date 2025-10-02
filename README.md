@@ -1,11 +1,11 @@
-Conformacion de grupo:
-  Juan Martin Lopez Vannoni
+Conformacion de grupo:  
+  Juan Martin Lopez Vannoni  
   Iñaki Uranga Vega
 
-Practico 1 --> abarca el directorio static y los archivos libres (excepto el sqlc.yaml)
+Practico 1 --> abarca el directorio static y los archivos libres (excepto el sqlc.yaml)  
 Practico 2 --> abarca el directorio db y de los archivos libres, solo el archivo sqlc.yaml
 
-Bitacora de Futbol (nombre preliminar)
+Bitacora de Futbol (nombre preliminar)  
 Es una pagina web dedicada a que cada futbolista pueda registrar su rendimiento en cada partido que juega, donde hay estadisticas tanto para jugadores de campo como para arqueros.
 La idea de utilizacion de la pagina web es la siguiente:
   1. El usuario se registra en la pagina web.
