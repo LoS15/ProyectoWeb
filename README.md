@@ -18,5 +18,5 @@ Como ejecutar el servidor web del practico 1:
   1. En la CLI: go run main.go handlers.go
   2. En su navegador de confianza: http://localhost:8080/
 
-Como generar los archivos del sqlc (ya estan generados, pero si se quisieran regenerar)
+Como generar los archivos del sqlc (ya estan generados, pero si se quisieran regenerar) del practico 2:
   1. En la CLI: sqlc generate
