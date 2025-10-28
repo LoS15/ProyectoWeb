@@ -24,17 +24,50 @@ func (q *Queries) DeletePartido(ctx context.Context, arg DeletePartidoParams) er
 	return err
 }
 
-const getPartido = `-- name: GetPartido :one
+const getAllPartido = `-- name: GetAllPartido :many
+SELECT id_partido, id_usuario, fecha, cancha, puntuacion FROM partido
+`
+
+func (q *Queries) GetAllPartido(ctx context.Context) ([]Partido, error) {
+	rows, err := q.db.QueryContext(ctx, getAllPartido)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Partido
+	for rows.Next() {
+		var i Partido
+		if err := rows.Scan(
+			&i.IDPartido,
+			&i.IDUsuario,
+			&i.Fecha,
+			&i.Cancha,
+			&i.Puntuacion,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPartidoPorUsuario = `-- name: GetPartidoPorUsuario :one
 SELECT id_partido, id_usuario, fecha, cancha, puntuacion FROM partido WHERE id_usuario = $1 AND id_partido = $2
 `
 
-type GetPartidoParams struct {
+type GetPartidoPorUsuarioParams struct {
 	IDUsuario int32 `json:"id_usuario"`
 	IDPartido int32 `json:"id_partido"`
 }
 
-func (q *Queries) GetPartido(ctx context.Context, arg GetPartidoParams) (Partido, error) {
-	row := q.db.QueryRowContext(ctx, getPartido, arg.IDUsuario, arg.IDPartido)
+func (q *Queries) GetPartidoPorUsuario(ctx context.Context, arg GetPartidoPorUsuarioParams) (Partido, error) {
+	row := q.db.QueryRowContext(ctx, getPartidoPorUsuario, arg.IDUsuario, arg.IDPartido)
 	var i Partido
 	err := row.Scan(
 		&i.IDPartido,
@@ -76,12 +109,12 @@ func (q *Queries) InsertPartido(ctx context.Context, arg InsertPartidoParams) (P
 	return i, err
 }
 
-const listPartidos = `-- name: ListPartidos :many
+const listPartidosPorUsuario = `-- name: ListPartidosPorUsuario :many
 SELECT id_partido, id_usuario, fecha, cancha, puntuacion FROM partido WHERE id_usuario = $1
 `
 
-func (q *Queries) ListPartidos(ctx context.Context, idUsuario int32) ([]Partido, error) {
-	rows, err := q.db.QueryContext(ctx, listPartidos, idUsuario)
+func (q *Queries) ListPartidosPorUsuario(ctx context.Context, idUsuario int32) ([]Partido, error) {
+	rows, err := q.db.QueryContext(ctx, listPartidosPorUsuario, idUsuario)
 	if err != nil {
 		return nil, err
 	}
@@ -110,16 +143,17 @@ func (q *Queries) ListPartidos(ctx context.Context, idUsuario int32) ([]Partido,
 }
 
 const updatePartido = `-- name: UpdatePartido :exec
-UPDATE partido SET puntuacion = $2
-WHERE id_usuario = $1
+UPDATE partido SET puntuacion = $3
+WHERE id_usuario = $1 AND id_partido = $2
 `
 
 type UpdatePartidoParams struct {
 	IDUsuario  int32 `json:"id_usuario"`
+	IDPartido  int32 `json:"id_partido"`
 	Puntuacion int32 `json:"puntuacion"`
 }
 
 func (q *Queries) UpdatePartido(ctx context.Context, arg UpdatePartidoParams) error {
-	_, err := q.db.ExecContext(ctx, updatePartido, arg.IDUsuario, arg.Puntuacion)
+	_, err := q.db.ExecContext(ctx, updatePartido, arg.IDUsuario, arg.IDPartido, arg.Puntuacion)
 	return err
 }

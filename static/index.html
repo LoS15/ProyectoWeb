@@ -8,4 +8,78 @@
 <body>
     <h1>Bienvenido a la Bitacora de Futbol</h1>
     <p>Es una pagina web dedicada a que cada futbolista pueda registrar su rendimiento en cada partido que juega, donde hay estadisticas tanto para jugadores de campo como para arqueros. </p>
+    <form id="formulario-partido">
+        <fieldset>
+            <legend>Datos del partido</legend>
+            <div>
+                <label for="user_id">User ID:</label>
+                <input type="number" id="user_id" name="user_id">
+            </div>
+            <div>
+                <label for="match_date">Match date:</label>
+                <input type="date" id="match_date" name="match_date">
+            </div>
+            <div>
+                <label for="match_field_name">Match field name:</label>
+                <input type="text" id="match_field_name" name="match_field_name">
+            </div>
+            <div>
+                <label for="match_score">Match score (0-10):</label>
+                <input type="number" id="match_score" name="match_score" min="0" max="10">
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>Tipo de estadistica</legend>
+            <div>
+                <input type="radio" id="tipo_jugador" name="tipo_estadistica" value="jugador" checked>
+                <label for="tipo_jugador" style="display:inline;">Jugador de Campo</label>
+            </div>
+            <div>
+                <input type="radio" id="tipo_arquero" name="tipo_estadistica" value="arquero">
+                <label for="tipo_arquero" style="display:inline;">Arquero</label>
+            </div>
+        </fieldset>
+        <fieldset id="estadisticas-jugador-campo" style="display: none;">
+            <legend>Estadisticas de Jugador de Campo</legend>
+            <div>
+                <label for="goles">Goles:</label>
+                <input type="number" id="goles" name="goles" min="0" value="0">
+            </div>
+            <div>
+                <label for="asistencias">Asistencias:</label>
+                <input type="number" id="asistencias" name="asistencias" min="0" value="0">
+            </div>
+            <div>
+                <label for="pases_completados">Pases Completados (%):</label>
+                <input type="number" id="pases_completados" name="pases_completados" min="0" value="0">
+            </div>
+            <div>
+                <label for="duelos_ganados">Duelos Ganados (%):</label>
+                <input type="number" id="duelos_ganados" name="duelos_ganados" min="0" value="0">
+            </div>
+        </fieldset>
+        <fieldset id="estadisticas-arquero" style="display: none;">
+            <legend>Estadisticas de Arquero</legend>
+            <div>
+                <label for="goles_recibidos">Goles Recibidos:</label>
+                <input type="number" id="goles_recibidos" name="goles_recibidos" min="0" value="0">
+            </div>
+            <div>
+                <label for="atajadas_clave">Atajadas Clave:</label>
+                <input type="number" id="atajadas_clave" name="atajadas_clave" min="0" value="0">
+            </div>
+            <div>
+                <label for="saques_completados">Saques Completados (%):</label>
+                <input type="number" id="saques_completados" name="saques_completados" min="0" value="0">
+            </div>
+        </fieldset>
+        <div>
+            <button type="submit">Agregar Partido</button>
+        </div>
+        <div id="feedback-formulario"></div>
+    </form>
+    <div id="div-partidos">
+        <h1>Lista de partidos</h1>
+    </div>
+    <script src="app.js"></script>
 </body>

@@ -10,6 +10,7 @@ import (
 )
 
 type EstadisticaArquero struct {
+	IDUsuario         int32          `json:"id_usuario"`
 	IDPartido         int32          `json:"id_partido"`
 	GolesRecibidos    int32          `json:"goles_recibidos"`
 	AtajadasClave     int32          `json:"atajadas_clave"`
@@ -17,6 +18,7 @@ type EstadisticaArquero struct {
 }
 
 type EstadisticaJugador struct {
+	IDUsuario        int32          `json:"id_usuario"`
 	IDPartido        int32          `json:"id_partido"`
 	Goles            int32          `json:"goles"`
 	Asistencias      int32          `json:"asistencias"`

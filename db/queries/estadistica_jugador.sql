@@ -1,0 +1,7 @@
+-- name: InsertEstadisticaJugador :one
+INSERT INTO Estadistica_Jugador(id_usuario, id_partido, goles, asistencias, pases_completados, duelos_ganados) VALUES ($1, $2, $3, $4, $5, $6)
+    RETURNING *;
+
+-- name: UpdateEstadisticaJugador :exec
+UPDATE Estadistica_Jugador SET goles = $3, asistencias= $4, pases_completados= $5, duelos_ganados= $6
+WHERE id_usuario = $1 AND id_partido = $2;
