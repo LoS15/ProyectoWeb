@@ -1,0 +1,207 @@
+/* =============================================
+   ESTILOS CON CSS GRID (Layout Completo)
+   ============================================= */
+
+/* --- 1. Estilos Base y Reset --- */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: #f4f7f6; /* Un fondo gris claro para la página */
+    color: #333;
+    line-height: 1.6;
+}
+
+/* --- 2. ⬇️ DEFINICIÓN DEL GRID PRINCIPAL ⬇️ --- */
+body {
+    display: grid;
+    /* Forzamos el layout a ocupar el 100% de la altura de la pantalla */
+    height: 100vh;
+
+    /* Define la altura de las filas:
+       1. 'auto' (lo que mida el header)
+       2. '1fr' (ocupa todo el espacio restante)
+       3. 'auto' (lo que mida el footer)
+    */
+    grid-template-rows: auto 1fr auto;
+
+    /* Define las 2 columnas que pediste:
+       1. Formulario: mínimo 450px, máximo 1fr (flexible)
+       2. Lista: 2fr (el doble de ancha, flexible)
+    */
+    grid-template-columns: minmax(450px, 1fr) 2fr;
+
+    /* Define las áreas de nuestro layout */
+    grid-template-areas:
+        "header header"  /* El header ocupa ambas columnas */
+        "form   lista"   /* El formulario en col 1, la lista en col 2 */
+        "footer footer"; /* El footer ocupa ambas columnas */
+}
+
+/* --- 3. Posicionamiento del Header y Footer --- */
+header {
+    grid-area: header;
+    background-color: #004a9c; /* Azul oscuro */
+    color: white;
+    padding: 1.5em 2em;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+header h1 {
+    color: white;
+    margin: 0;
+    font-size: 1.8em;
+}
+
+header p {
+    margin: 0.5em 0 0;
+    font-size: 1.1em;
+    color: #d0e0ff; /* Un azul más claro para la descripción */
+}
+
+footer {
+    grid-area: footer;
+    background-color: #333;
+    color: #aaa;
+    padding: 1.5em 2em;
+    text-align: center;
+}
+
+/* --- 4. ⬇️ Posicionamiento de las Columnas Centrales ⬇️ --- */
+
+/* Columna 1: Formulario */
+#container-formulario {
+    grid-area: form;
+    background-color: #fdfdfd;
+    padding: 20px;
+    overflow-y: auto; /* AÑADE SCROLL si el formulario es muy largo */
+    border-right: 1px solid #ddd;
+}
+
+/* Columna 2: Lista de Partidos */
+#container_partidos {
+    grid-area: lista;
+    padding: 20px;
+    overflow-y: auto; /* AÑADE SCROLL si la lista es muy larga */
+}
+
+/* --- 5. Estilos de Formulario (Estética) --- */
+#formulario-partido,
+.formulario-modificar-estadisticas,
+.formulario-modificar-partido {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border: 1px solid #e0e0e0;
+    padding: 1.5em;
+    margin-bottom: 20px;
+}
+
+fieldset {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 1em;
+    margin-bottom: 1em;
+}
+
+legend {
+    font-weight: 600;
+    color: #005a9c;
+    padding: 0 0.5em;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.3em;
+    font-weight: 500;
+}
+
+input[type="text"],
+input[type="date"],
+input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+button[type="submit"] {
+    background-color: #007bff;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s;
+    width: 100%;
+    padding: 12px;
+    font-size: 1em;
+}
+
+button[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+button.boton-cancelar-mod {
+    background-color: #6c757d; /* Gris */
+    margin-top: 5px;
+}
+button.boton-cancelar-mod:hover {
+    background-color: #5a6268;
+}
+
+/* --- 6. ⬇️ CSS Grid Anidado (Para la Lista de Partidos) ⬇️ --- */
+#div-partidos {
+    display: grid;
+    /* Crea columnas que midan al menos 300px.
+       'auto-fit' hace que se ajusten automáticamente
+       para llenar el espacio.
+    */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.elemento-partido {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    padding: 1.5em;
+    border: 1px solid #e0e0e0;
+}
+
+.elemento-partido button {
+    margin-top: 5px;
+    margin-right: 5px;
+    width: auto; /* Deja que los botones tengan ancho natural */
+    padding: 8px 12px;
+    font-size: 0.9em;
+}
+
+.div-estadisticas {
+    border-top: 1px dashed #eee;
+    margin-top: 10px;
+    padding-top: 10px;
+}
+
+/* --- 7. Responsive (Pantallas Pequeñas) --- */
+@media (max-width: 900px) {
+    body {
+        /* Apilamos todo en una sola columna */
+        height: auto; /* Deja que el contenido fluya */
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto auto; /* 4 filas automáticas */
+        grid-template-areas:
+            "header"
+            "form"
+            "lista"
+            "footer";
+    }
+
+    /* Quitamos los scrolls individuales */
+    #container-formulario,
+    #container_partidos {
+        overflow-y: visible;
+        border-right: none;
+    }
+}

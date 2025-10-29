@@ -3,83 +3,154 @@
     <meta charset="UTF-8">
     <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
     <title>BitacoraFutbol</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="styles5.css">
 </head>
 <body>
-    <h1>Bienvenido a la Bitacora de Futbol</h1>
-    <p>Es una pagina web dedicada a que cada futbolista pueda registrar su rendimiento en cada partido que juega, donde hay estadisticas tanto para jugadores de campo como para arqueros. </p>
-    <form id="formulario-partido">
-        <fieldset>
-            <legend>Datos del partido</legend>
+    <header>
+        <h1>Bienvenido a la Bitacora de Futbol</h1>
+        <p>Es una pagina web dedicada a que cada futbolista pueda registrar su rendimiento en cada partido que juega, donde hay estadisticas tanto para jugadores de campo como para arqueros. </p>
+    </header>
+    <section id="container-formulario">
+        <form id="formulario-partido">
+            <fieldset>
+                <legend>Datos del partido</legend>
+                <div>
+                    <label for="id_usuario">ID Usuario:</label>
+                    <input type="number" id="id_usuario" step="1" name="id_usuario" required>
+                </div>
+                <div>
+                    <label for="fecha_partido">Fecha:</label>
+                    <input type="date" id="fecha_partido" step="1" name="fecha_partido" required>
+                </div>
+                <div>
+                    <label for="cancha">Cancha:</label>
+                    <input type="text" id="cancha" name="cancha" required>
+                </div>
+                <div>
+                    <label for="puntuacion">Puntuacion (0-10):</label>
+                    <input type="number" step="1" id="puntuacion" name="puntuacion" min="0" max="10" required>
+                </div>
+            </fieldset>
+            <fieldset>
+                <legend>Tipo de estadistica</legend>
+                <div>
+                    <input type="radio" id="tipo_jugador" name="tipo_estadistica" value="jugador" checked>
+                    <label for="tipo_jugador" style="display:inline;">Jugador de Campo</label>
+                </div>
+                <div>
+                    <input type="radio" id="tipo_arquero" name="tipo_estadistica" value="arquero">
+                    <label for="tipo_arquero" style="display:inline;">Arquero</label>
+                </div>
+            </fieldset>
+            <fieldset id="estadisticas-jugador-campo" style="display: none;">
+                <legend>Estadisticas de Jugador de Campo</legend>
+                <div>
+                    <label for="goles">Goles:</label>
+                    <input type="number" id="goles" step="1" name="goles" min="0" value="0" required>
+                </div>
+                <div>
+                    <label for="asistencias">Asistencias:</label>
+                    <input type="number" id="asistencias" name="asistencias" step="1" min="0" value="0" required>
+                </div>
+                <div>
+                    <label for="pases_completados">Pases Completados (%):</label>
+                    <input type="number" id="pases_completados" name="pases_completados" step="0.01" min="0" value="0">
+                </div>
+                <div>
+                    <label for="duelos_ganados">Duelos Ganados (%):</label>
+                    <input type="number" id="duelos_ganados" name="duelos_ganados" step="0.01" min="0" value="0">
+                </div>
+            </fieldset>
+            <fieldset id="estadisticas-arquero" style="display: none;">
+                <legend>Estadisticas de Arquero</legend>
+                <div>
+                    <label for="goles_recibidos">Goles Recibidos:</label>
+                    <input type="number" id="goles_recibidos" name="goles_recibidos" step="1" min="0" value="0" required>
+                </div>
+                <div>
+                    <label for="atajadas_clave">Atajadas Clave:</label>
+                    <input type="number" id="atajadas_clave" name="atajadas_clave" step="1" min="0" value="0" required>
+                </div>
+                <div>
+                    <label for="saques_completados">Saques Completados (%):</label>
+                    <input type="number" id="saques_completados" name="saques_completados" step="0.01" min="0" value="0">
+                </div>
+            </fieldset>
             <div>
-                <label for="user_id">User ID:</label>
-                <input type="number" id="user_id" name="user_id">
+                <button type="submit">Agregar Partido</button>
             </div>
-            <div>
-                <label for="match_date">Match date:</label>
-                <input type="date" id="match_date" name="match_date">
-            </div>
-            <div>
-                <label for="match_field_name">Match field name:</label>
-                <input type="text" id="match_field_name" name="match_field_name">
-            </div>
-            <div>
-                <label for="match_score">Match score (0-10):</label>
-                <input type="number" id="match_score" name="match_score" min="0" max="10">
-            </div>
-        </fieldset>
-        <fieldset>
-            <legend>Tipo de estadistica</legend>
-            <div>
-                <input type="radio" id="tipo_jugador" name="tipo_estadistica" value="jugador" checked>
-                <label for="tipo_jugador" style="display:inline;">Jugador de Campo</label>
-            </div>
-            <div>
-                <input type="radio" id="tipo_arquero" name="tipo_estadistica" value="arquero">
-                <label for="tipo_arquero" style="display:inline;">Arquero</label>
-            </div>
-        </fieldset>
-        <fieldset id="estadisticas-jugador-campo" style="display: none;">
-            <legend>Estadisticas de Jugador de Campo</legend>
-            <div>
-                <label for="goles">Goles:</label>
-                <input type="number" id="goles" name="goles" min="0" value="0">
-            </div>
-            <div>
-                <label for="asistencias">Asistencias:</label>
-                <input type="number" id="asistencias" name="asistencias" min="0" value="0">
-            </div>
-            <div>
-                <label for="pases_completados">Pases Completados (%):</label>
-                <input type="number" id="pases_completados" name="pases_completados" min="0" value="0">
-            </div>
-            <div>
-                <label for="duelos_ganados">Duelos Ganados (%):</label>
-                <input type="number" id="duelos_ganados" name="duelos_ganados" min="0" value="0">
-            </div>
-        </fieldset>
-        <fieldset id="estadisticas-arquero" style="display: none;">
-            <legend>Estadisticas de Arquero</legend>
-            <div>
-                <label for="goles_recibidos">Goles Recibidos:</label>
-                <input type="number" id="goles_recibidos" name="goles_recibidos" min="0" value="0">
-            </div>
-            <div>
-                <label for="atajadas_clave">Atajadas Clave:</label>
-                <input type="number" id="atajadas_clave" name="atajadas_clave" min="0" value="0">
-            </div>
-            <div>
-                <label for="saques_completados">Saques Completados (%):</label>
-                <input type="number" id="saques_completados" name="saques_completados" min="0" value="0">
-            </div>
-        </fieldset>
-        <div>
-            <button type="submit">Agregar Partido</button>
+            <div id="feedback-formulario"></div>
+        </form>
+    </section>
+    <section id="container_partidos">
+        <div id="div-partidos">
+            <h1>Lista de partidos</h1>
         </div>
-        <div id="feedback-formulario"></div>
-    </form>
-    <div id="div-partidos">
-        <h1>Lista de partidos</h1>
-    </div>
+    </section>
+    <footer>
+        <p>© 2025 Bitácora de Fútbol. Todos los derechos reservados.</p>
+    </footer>
+
+    <template id="template-formulario-jugador">
+        <form class="formulario-modificar-estadisticas">
+            <input type="hidden" name="tipo" value="jugador">
+            <input type="hidden" name="id_partido" value=""> <input type="hidden" name="id_usuario" value="">
+
+            <label>Goles:</label>
+            <input type="number" name="goles" step="1" value="0">
+
+            <label>Asistencias:</label>
+            <input type="number" name="asistencias" step="1" value="0">
+
+            <label>Pases completados (%):</label>
+            <input type="number" name="pases-completados" step="0.01" value=0 min="0" max="1">
+
+            <label>Duelos ganados (%):</label>
+            <input type="number" name="duelos_ganados" step="0.01" value=0 min="0" max="1">
+
+            <button type="submit">Guardar Cambios</button>
+            <button type="button" class="boton-cancelar-mod">Cancelar</button>
+        </form>
+    </template>
+
+    <template id="template-formulario-arquero">
+        <form class="formulario-modificar-estadisticas">
+            <input type="hidden" name="tipo" value="arquero">
+            <input type="hidden" name="id_partido" value="">
+            <input type="hidden" name="id_usuario" value="">
+
+            <label>Goles Recibidos:</label>
+            <input type="number" name="goles_recibidos" step="1" value="0">
+
+            <label>Atajadas Clave:</label>
+            <input type="number" name="atajadas_clave" step="1" value="0">
+
+            <label>Saques completados (%):</label>
+            <input type="number" name="saques_completados" step="0.01" value="0" min="0" max="1">
+
+            <button type="submit">Guardar Cambios</button>
+            <button type="button" class="boton-cancelar-mod">Cancelar</button>
+        </form>
+    </template>
+
+    <template id="template-formulario-partido">
+        <form class="formulario-modificar-partido">
+            <input type="hidden" name="id_partido" value="">
+            <input type="hidden" name="id_usuario" value="">
+
+            <label>Fecha:</label>
+            <input type="date" name="fecha_partido">
+
+            <label>Cancha:</label>
+            <input type="text" name="cancha">
+
+            <label>Puntuacion (0-10):</label>
+            <input type="number"  step="1" name="puntuacion" value="0" min="0" max="10">
+
+            <button type="submit">Guardar Cambios</button>
+            <button type="button" class="boton-cancelar-mod">Cancelar</button>
+        </form>
+    </template>
+
     <script src="app.js"></script>
 </body>

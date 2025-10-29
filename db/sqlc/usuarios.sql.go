@@ -32,8 +32,66 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (Usuario
 	return i, err
 }
 
-const updateUser = `-- name: UpdateUser :exec
+const deleteUsuario = `-- name: DeleteUsuario :exec
+DELETE FROM usuario WHERE id_usuario = $1
+`
+
+func (q *Queries) DeleteUsuario(ctx context.Context, idUsuario int32) error {
+	_, err := q.db.ExecContext(ctx, deleteUsuario, idUsuario)
+	return err
+}
+
+const getAllUser = `-- name: GetAllUser :many
+SELECT id_usuario, nombre, apellido, pais FROM usuario
+`
+
+func (q *Queries) GetAllUser(ctx context.Context) ([]Usuario, error) {
+	rows, err := q.db.QueryContext(ctx, getAllUser)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Usuario
+	for rows.Next() {
+		var i Usuario
+		if err := rows.Scan(
+			&i.IDUsuario,
+			&i.Nombre,
+			&i.Apellido,
+			&i.Pais,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUsuario = `-- name: GetUsuario :one
+SELECT id_usuario, nombre, apellido, pais FROM usuario WHERE id_usuario = $1
+`
+
+func (q *Queries) GetUsuario(ctx context.Context, idUsuario int32) (Usuario, error) {
+	row := q.db.QueryRowContext(ctx, getUsuario, idUsuario)
+	var i Usuario
+	err := row.Scan(
+		&i.IDUsuario,
+		&i.Nombre,
+		&i.Apellido,
+		&i.Pais,
+	)
+	return i, err
+}
+
+const updateUser = `-- name: UpdateUser :one
 UPDATE usuario SET nombre=$2, apellido=$3, pais=$4 WHERE id_usuario = $1
+RETURNING id_usuario, nombre, apellido, pais
 `
 
 type UpdateUserParams struct {
@@ -43,12 +101,19 @@ type UpdateUserParams struct {
 	Pais      string `json:"pais"`
 }
 
-func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
-	_, err := q.db.ExecContext(ctx, updateUser,
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (Usuario, error) {
+	row := q.db.QueryRowContext(ctx, updateUser,
 		arg.IDUsuario,
 		arg.Nombre,
 		arg.Apellido,
 		arg.Pais,
 	)
-	return err
+	var i Usuario
+	err := row.Scan(
+		&i.IDUsuario,
+		&i.Nombre,
+		&i.Apellido,
+		&i.Pais,
+	)
+	return i, err
 }

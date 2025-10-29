@@ -1,0 +1,128 @@
+/* =============================================
+   ESTILOS CON CSS GRID (style.css)
+   ============================================= */
+
+/* --- Estilos Base (Comunes) --- */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: #f4f7f6;
+    color: #333;
+    line-height: 1.6;
+    margin: 0;
+    padding: 20px;
+}
+
+h1, legend {
+    font-weight: 600;
+    color: #005a9c;
+}
+
+/* --- Estilos de Formulario y Tarjetas --- */
+form,
+.elemento-partido {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e0e0e0;
+    margin-bottom: 20px;
+    padding: 1.5em;
+}
+
+fieldset {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 1em;
+    margin-bottom: 1em;
+}
+
+/* Campos de texto y número (igual que antes) */
+label { display: block; margin-bottom: 0.3em; font-weight: bold; }
+input[type="radio"] + label { display: inline; font-weight: normal; margin-left: 0.5em; }
+input[type="text"],
+input[type="date"],
+input[type="number"],
+button {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+button[type="submit"] {
+    background-color: #28a745; /* Un verde para diferenciar */
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s;
+}
+
+button[type="submit"]:hover {
+    background-color: #218838;
+}
+
+/* --- ⬇️ CSS GRID EN ACCIÓN ⬇️ --- */
+
+/* 1. Layout Principal de la Página
+   Usamos Grid en el <body> para definir áreas.
+   Hacemos que el formulario ocupe un mínimo de 450px
+   y la lista de partidos ocupe el resto (1fr).
+*/
+body {
+    display: grid;
+    grid-template-columns: minmax(450px, 1fr) 2fr; /* Columna 1 (Form) | Columna 2 (Lista) */
+    grid-template-areas:
+        "header header"
+        "intro  intro"
+        "form   lista";
+    gap: 20px;
+}
+
+/* Asignamos cada elemento a su área */
+h1 { grid-area: header; }
+body > p { grid-area: intro; } /* El <p> que es hijo directo de body */
+#formulario-partido { grid-area: form; }
+#div-partidos { grid-area: lista; }
+
+/* 2. Layout de la lista de partidos
+   Usamos Grid *dentro* de la lista para crear una
+   cuadrícula de tarjetas que se ajusta sola.
+*/
+#div-partidos {
+    display: grid;
+    /* Crea columnas que midan al menos 300px.
+       'auto-fit' hace que se ajusten automáticamente
+       para llenar el espacio.
+    */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    align-content: start; /* Evita que las tarjetas se estiren */
+}
+
+/* 3. Layout de cada tarjeta (opcional con Grid)
+   Podemos usar Grid *dentro* de la tarjeta para alinear botones.
+*/
+.elemento-partido {
+    display: grid;
+    grid-template-rows: 1fr auto; /* Contenido (1fr) | Botones (auto) */
+}
+
+.elemento-partido .div-estadisticas {
+    border-top: 1px dashed #eee;
+    margin-top: 10px;
+    padding-top: 10px;
+}
+
+/* --- Responsive para pantallas pequeñas --- */
+@media (max-width: 900px) {
+    body {
+        /* Apilamos todo en una sola columna */
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "header"
+            "intro"
+            "form"
+            "lista";
+    }
+}

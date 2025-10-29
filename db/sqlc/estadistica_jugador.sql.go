@@ -45,9 +45,10 @@ func (q *Queries) InsertEstadisticaJugador(ctx context.Context, arg InsertEstadi
 	return i, err
 }
 
-const updateEstadisticaJugador = `-- name: UpdateEstadisticaJugador :exec
+const updateEstadisticaJugador = `-- name: UpdateEstadisticaJugador :one
 UPDATE Estadistica_Jugador SET goles = $3, asistencias= $4, pases_completados= $5, duelos_ganados= $6
 WHERE id_usuario = $1 AND id_partido = $2
+RETURNING id_usuario, id_partido, goles, asistencias, pases_completados, duelos_ganados
 `
 
 type UpdateEstadisticaJugadorParams struct {
@@ -59,8 +60,8 @@ type UpdateEstadisticaJugadorParams struct {
 	DuelosGanados    sql.NullString `json:"duelos_ganados"`
 }
 
-func (q *Queries) UpdateEstadisticaJugador(ctx context.Context, arg UpdateEstadisticaJugadorParams) error {
-	_, err := q.db.ExecContext(ctx, updateEstadisticaJugador,
+func (q *Queries) UpdateEstadisticaJugador(ctx context.Context, arg UpdateEstadisticaJugadorParams) (EstadisticaJugador, error) {
+	row := q.db.QueryRowContext(ctx, updateEstadisticaJugador,
 		arg.IDUsuario,
 		arg.IDPartido,
 		arg.Goles,
@@ -68,5 +69,14 @@ func (q *Queries) UpdateEstadisticaJugador(ctx context.Context, arg UpdateEstadi
 		arg.PasesCompletados,
 		arg.DuelosGanados,
 	)
-	return err
+	var i EstadisticaJugador
+	err := row.Scan(
+		&i.IDUsuario,
+		&i.IDPartido,
+		&i.Goles,
+		&i.Asistencias,
+		&i.PasesCompletados,
+		&i.DuelosGanados,
+	)
+	return i, err
 }

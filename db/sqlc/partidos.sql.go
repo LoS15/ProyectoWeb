@@ -142,18 +142,35 @@ func (q *Queries) ListPartidosPorUsuario(ctx context.Context, idUsuario int32) (
 	return items, nil
 }
 
-const updatePartido = `-- name: UpdatePartido :exec
-UPDATE partido SET puntuacion = $3
+const updatePartido = `-- name: UpdatePartido :one
+UPDATE partido SET fecha = $3, cancha=$4, puntuacion = $5
 WHERE id_usuario = $1 AND id_partido = $2
+RETURNING id_partido, id_usuario, fecha, cancha, puntuacion
 `
 
 type UpdatePartidoParams struct {
-	IDUsuario  int32 `json:"id_usuario"`
-	IDPartido  int32 `json:"id_partido"`
-	Puntuacion int32 `json:"puntuacion"`
+	IDUsuario  int32     `json:"id_usuario"`
+	IDPartido  int32     `json:"id_partido"`
+	Fecha      time.Time `json:"fecha"`
+	Cancha     string    `json:"cancha"`
+	Puntuacion int32     `json:"puntuacion"`
 }
 
-func (q *Queries) UpdatePartido(ctx context.Context, arg UpdatePartidoParams) error {
-	_, err := q.db.ExecContext(ctx, updatePartido, arg.IDUsuario, arg.IDPartido, arg.Puntuacion)
-	return err
+func (q *Queries) UpdatePartido(ctx context.Context, arg UpdatePartidoParams) (Partido, error) {
+	row := q.db.QueryRowContext(ctx, updatePartido,
+		arg.IDUsuario,
+		arg.IDPartido,
+		arg.Fecha,
+		arg.Cancha,
+		arg.Puntuacion,
+	)
+	var i Partido
+	err := row.Scan(
+		&i.IDPartido,
+		&i.IDUsuario,
+		&i.Fecha,
+		&i.Cancha,
+		&i.Puntuacion,
+	)
+	return i, err
 }
