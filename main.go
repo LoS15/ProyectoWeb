@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	_ "github.com/lib/pq"
 )
@@ -58,13 +59,24 @@ func main() {
 	})*/
 
 	// Conexión a la base de datos
-	connStr := "host=localhost port=5432 user=user password=user_password dbname=proyecto_web sslmode=disable"
+	//connStr := "host=localhost port=5432 user=user password=user_password dbname=proyecto_web sslmode=disable"
+
+	//connStr para docker compose
+	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		os.Getenv("DB_HOST"), "5432", os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"))
 	var err error
 	dbConn, err = sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatalf("Error connecting to database: %v", err)
 	}
 	defer dbConn.Close()
+
+	//esto solo esta para cuando se corre por docker compose
+	err = dbConn.Ping()
+	if err != nil {
+		log.Fatalf("Error conectando a la base de datos (Ping fallido): %v", err)
+	}
+	log.Println("¡Conexión exitosa a la base de datos!")
 
 	// Instancio el repositorio
 	queries = db.New(dbConn)

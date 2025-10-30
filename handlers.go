@@ -64,6 +64,7 @@ func crearPartido(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&partido)
 	if err != nil {
 		// Si ocurre un error al decodificar el JSON, lanzo un código 400 y finalizo la ejecucion del handler
+		log.Printf("Error al decodificar el JSON para crear el partido: %v", err)
 		http.Error(w, "Los datos envíados son inválidos", http.StatusBadRequest)
 		return
 	}
@@ -86,6 +87,7 @@ func crearPartido(w http.ResponseWriter, r *http.Request) {
 	nuevoPartido, err := queries.InsertPartido(ctx, partido)
 	if err != nil {
 		// Si ocurre un error al insertar el nuevo partido, lanzo código 500 y finalizo la ejecucion del handler
+		log.Printf("Error creando partido: %v", err)
 		http.Error(w, "Error creando partido", http.StatusInternalServerError)
 		return
 	}
@@ -96,6 +98,7 @@ func crearPartido(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(nuevoPartido)
 	if err != nil {
 		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
+		log.Printf("Error codificando a JSON el partido creado: %v", err)
 		http.Error(w, "Error codificando a JSON el partido creado", http.StatusInternalServerError)
 		return
 	}
@@ -111,6 +114,7 @@ func crearPartidoCompleto(w http.ResponseWriter, r *http.Request) {
 	transaccion, err := dbConn.BeginTx(ctx, nil)
 	if err != nil {
 		// Si ocurre un error al iniciar la transaccion, lanzo un código 500 y finalizo la ejecucion del handler
+		log.Printf("Error iniciando la transaccion: %v", err)
 		http.Error(w, "Error iniciando la transaccion", http.StatusInternalServerError)
 		return
 	}
@@ -125,6 +129,7 @@ func crearPartidoCompleto(w http.ResponseWriter, r *http.Request) {
 	err = json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		// Si ocurre un error al decodificar el JSON, lanzo un código 400 y finalizo la ejecucion del handler
+		log.Printf("Error al decodificar el JSON para crear el partido completo junto a sus estadisticas: %v", err)
 		http.Error(w, "Los datos envíados son inválidos", http.StatusBadRequest)
 		return
 	}
@@ -156,6 +161,7 @@ func crearPartidoCompleto(w http.ResponseWriter, r *http.Request) {
 	nuevoPartido, err := qtran.InsertPartido(ctx, datosNuevoPartido)
 	if err != nil {
 		// Si ocurre un error al insertar el nuevo partido, lanzo código 500 y finalizo la ejecucion del handler
+		log.Printf("Error creando partido: %v", err)
 		http.Error(w, "Error creando partido", http.StatusInternalServerError)
 		return
 	}
@@ -167,6 +173,7 @@ func crearPartidoCompleto(w http.ResponseWriter, r *http.Request) {
 
 		if request.EstadisticaJugador == nil {
 			// Si las estadisticas no están cargadas, lanzo código 400 y finalizo la ejecucion del handler
+			log.Printf("Faltan datos de estadisticas de jugador: %v", err)
 			http.Error(w, "Faltan datos de estadisticas de jugador", http.StatusBadRequest)
 			return
 		}
@@ -199,6 +206,7 @@ func crearPartidoCompleto(w http.ResponseWriter, r *http.Request) {
 		_, err = qtran.InsertEstadisticaJugador(ctx, datosNuevaEstadisticaJugador)
 		if err != nil {
 			// Si ocurre un error al insertar las nuevas estadisticas, lanzo código 500 y finalizo la ejecucion del handler
+			log.Printf("Error creando estadisticas de jugador: %v", err)
 			http.Error(w, "Error creando estadisticas de jugador", http.StatusInternalServerError)
 			return
 		}
@@ -208,6 +216,7 @@ func crearPartidoCompleto(w http.ResponseWriter, r *http.Request) {
 
 		if request.EstadisticaArquero == nil {
 			// Si las estadisticas no están cargadas, lanzo código 400 y finalizo la ejecucion del handler
+			log.Printf("Faltan datos de estadisticas de arquero: %v", err)
 			http.Error(w, "Faltan datos de estadisticas de arquero", http.StatusBadRequest)
 			return
 		}
@@ -238,11 +247,13 @@ func crearPartidoCompleto(w http.ResponseWriter, r *http.Request) {
 		_, err = qtran.InsertEstadisticaArquero(ctx, datosNuevaEstadisticaArquero)
 		if err != nil {
 			// Si ocurre un error al insertar las nuevas estadisticas, lanzo código 500 y finalizo la ejecucion del handler
+			log.Printf("Error creando estadisticas de jugador: %v", err)
 			http.Error(w, "Error creando estadisticas de arquero", http.StatusInternalServerError)
 			return
 		}
 	default:
 		// Si el tipo de estadisticas es otro, lanzo código 400 y finalizo la ejecucion del handler
+		log.Printf("Error por el tipo de estadística no válido: %v", err)
 		http.Error(w, "Tipo de estadística no válido", http.StatusBadRequest)
 		return
 	}
@@ -251,6 +262,7 @@ func crearPartidoCompleto(w http.ResponseWriter, r *http.Request) {
 	err = transaccion.Commit()
 	if err != nil {
 		// Si ocurre un error al confirmar la transaccion, lanzo código 500 y finalizo la ejecucion del handler
+		log.Printf("Error confirmando la transaccion: %v", err)
 		http.Error(w, "Error confirmando transacción", http.StatusInternalServerError)
 		return
 	}
@@ -272,7 +284,8 @@ func crearPartidoCompleto(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
 		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
-		http.Error(w, "Error codificando a JSON el partido creado junto a sus estadisticas", http.StatusInternalServerError)
+		log.Printf("Error codificando a JSON el partido completo creado junto a sus estadisticas: %v", err)
+		http.Error(w, "Error codificando a JSON el partido completo creado junto a sus estadisticas", http.StatusInternalServerError)
 		return
 	}
 }
@@ -286,6 +299,7 @@ func listarTodosLosPartidos(w http.ResponseWriter, r *http.Request) {
 	partidos, err := queries.GetAllPartido(ctx)
 	if err != nil {
 		// Si ocurre un error obteniendo todos los partidos, lanzo código 404 y finalizo la ejecucion del handler
+		log.Printf("Error obteniendo todos los partidos existentes: %v", err)
 		http.Error(w, "Error obteniendo todos los partidos existentes", http.StatusNotFound)
 		return
 	}
@@ -296,7 +310,8 @@ func listarTodosLosPartidos(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(partidos)
 	if err != nil {
 		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
-		http.Error(w, "Error codificando a JSON todos los partidos obtenidos", http.StatusInternalServerError)
+		log.Printf("Error codificando a JSON todos los partidos existentes: %v", err)
+		http.Error(w, "Error codificando a JSON todos los partidos existentes", http.StatusInternalServerError)
 		return
 	}
 }
@@ -310,6 +325,7 @@ func listarTodosLosPartidosPorUsuario(w http.ResponseWriter, r *http.Request, id
 	partidos, err := queries.ListPartidosPorUsuario(ctx, id_usuario)
 	if err != nil {
 		// Si ocurre un error obteniendo todos los partidos para un usuario dado, lanzo código 404 y finalizo la ejecucion del handler
+		log.Printf("Error obteniendo todos los partidos para el usuario %d: %v", id_usuario, err)
 		http.Error(w, fmt.Sprintf("Error obteniendo todos los partidos para el usuario %d", id_usuario), http.StatusNotFound)
 		return
 	}
@@ -320,7 +336,8 @@ func listarTodosLosPartidosPorUsuario(w http.ResponseWriter, r *http.Request, id
 	err = json.NewEncoder(w).Encode(partidos)
 	if err != nil {
 		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
-		http.Error(w, "Error codificando a JSON todos los partidos obtenidos", http.StatusInternalServerError)
+		log.Printf("Error codificando a JSON todos los partidos obtenidos para un usuario: %v", err)
+		http.Error(w, "Error codificando a JSON todos los partidos obtenidos para un usuario", http.StatusInternalServerError)
 		return
 	}
 }
@@ -340,6 +357,7 @@ func obtenerPartidoPorUsuario(w http.ResponseWriter, r *http.Request, id_usuario
 	partido, err := queries.GetPartidoPorUsuario(ctx, informacionPartido)
 	if err != nil {
 		// Si ocurre un error obteniendo el partido dado para el usuario dado, lanzo código 404 y finalizo la ejecucion del handler
+		log.Printf("Error obteniendo el partido %d para el usuario %d: %v", id_partido, id_usuario, err)
 		http.Error(w, fmt.Sprintf("Error obteniendo el partido %d para el usuario %d", id_partido, id_usuario), http.StatusNotFound)
 		return
 	}
@@ -350,6 +368,7 @@ func obtenerPartidoPorUsuario(w http.ResponseWriter, r *http.Request, id_usuario
 	err = json.NewEncoder(w).Encode(partido)
 	if err != nil {
 		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
+		log.Printf("Error codificando a JSON el partido obtenido: %v", err)
 		http.Error(w, "Error codificando a JSON el partido obtenido", http.StatusInternalServerError)
 		return
 	}
@@ -365,6 +384,7 @@ func actualizarPartido(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&partido)
 	if err != nil {
 		// Si ocurre un error al decodificar el JSON, lanzo un código 400 y finalizo la ejecucion del handler
+		log.Printf("Error al decodificar el JSON para actualizar el partido: %v", err)
 		http.Error(w, "Los datos envíados son inválidos", http.StatusBadRequest)
 		return
 	}
@@ -388,6 +408,7 @@ func actualizarPartido(w http.ResponseWriter, r *http.Request) {
 	nuevoPartido, err := queries.UpdatePartido(ctx, partido)
 	if err != nil {
 		// Si ocurre un error al actualizar el partido, lanzo código 500 y finalizo la ejecucion del handler
+		log.Printf("Error actualizando partido: %v", err)
 		http.Error(w, "Error actualizando partido", http.StatusInternalServerError)
 		return
 	}
@@ -398,6 +419,7 @@ func actualizarPartido(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(nuevoPartido)
 	if err != nil {
 		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
+		log.Printf("Error codificando a JSON el partido actualizado: %v", err)
 		http.Error(w, "Error codificando a JSON el partido actualizado", http.StatusInternalServerError)
 		return
 	}
@@ -418,6 +440,7 @@ func eliminarPartido(w http.ResponseWriter, r *http.Request, id_usuario int32, i
 	err := queries.DeletePartido(ctx, datosPartido)
 	if err != nil {
 		// Si ocurre un error al eliminar el partido, lanzo código 500 y finalizo la ejecucion del handler
+		log.Printf("Error eliminando partido: %v", err)
 		http.Error(w, "Error eliminando partido", http.StatusInternalServerError)
 		return
 	}
@@ -446,6 +469,7 @@ func crearUsuario(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&nuevoUsuario)
 	if err != nil {
 		// Si ocurre un error al decodificar el JSON, lanzo un código 400 y finalizo la ejecucion del handler
+		log.Printf("Error al decodificar el JSON para crear el usuario: %v", err)
 		http.Error(w, "Los datos envíados son inválidos", http.StatusBadRequest)
 		return
 	}
@@ -462,6 +486,7 @@ func crearUsuario(w http.ResponseWriter, r *http.Request) {
 	usuario, err := queries.CreateUser(ctx, nuevoUsuario)
 	if err != nil {
 		// Si ocurre un error al insertar el nuevo usuario, lanzo código 500 y finalizo la ejecucion del handler
+		log.Printf("Error creando usuario: %v", err)
 		http.Error(w, "Error creando usuario", http.StatusInternalServerError)
 		return
 	}
@@ -472,6 +497,7 @@ func crearUsuario(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(usuario)
 	if err != nil {
 		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
+		log.Printf("Error codificando a JSON el usuario creado: %v", err)
 		http.Error(w, "Error codificando a JSON el usuario creado", http.StatusInternalServerError)
 		return
 	}
@@ -486,6 +512,7 @@ func listarTodosLosUsuarios(w http.ResponseWriter, r *http.Request) {
 	usuarios, err := queries.GetAllUser(ctx)
 	if err != nil {
 		// Si ocurre un error obteniendo todos los usuarios, lanzo código 404 y finalizo la ejecucion del handler
+		log.Printf("Error obteniendo todos los usuarios existentes: %v", err)
 		http.Error(w, "Error obteniendo todos los usuarios existentes", http.StatusNotFound)
 		return
 	}
@@ -496,7 +523,8 @@ func listarTodosLosUsuarios(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(usuarios)
 	if err != nil {
 		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
-		http.Error(w, "Error codificando a JSON todos los usuarios obtenidos", http.StatusInternalServerError)
+		log.Printf("Error codificando a JSON todos los usuarios existentes: %v", err)
+		http.Error(w, "Error codificando a JSON todos los usuarios existentes", http.StatusInternalServerError)
 		return
 	}
 }
@@ -510,6 +538,7 @@ func obtenerUsuario(w http.ResponseWriter, r *http.Request, id_usuario int32) {
 	usuario, err := queries.GetUsuario(ctx, id_usuario)
 	if err != nil {
 		// Si ocurre un error obteniendo el usuario dado, lanzo código 404 y finalizo la ejecucion del handler
+		log.Printf("Error obteniendo el usuario %d: %v", id_usuario, err)
 		http.Error(w, fmt.Sprintf("Error obteniendo el usuario %d", id_usuario), http.StatusNotFound)
 		return
 	}
@@ -520,6 +549,7 @@ func obtenerUsuario(w http.ResponseWriter, r *http.Request, id_usuario int32) {
 	err = json.NewEncoder(w).Encode(usuario)
 	if err != nil {
 		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
+		log.Printf("Error codificando a JSON el usuario obtenido: %v", err)
 		http.Error(w, "Error codificando a JSON el usuario obtenido", http.StatusInternalServerError)
 		return
 	}
@@ -535,6 +565,7 @@ func actualizarUsuario(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&usuario)
 	if err != nil {
 		// Si ocurre un error al decodificar el JSON, lanzo un código 400 y finalizo la ejecucion del handler
+		log.Printf("Error al decodificar el JSON para actualizar el usuario: %v", err)
 		http.Error(w, "Los datos envíados son inválidos", http.StatusBadRequest)
 		return
 	}
@@ -557,6 +588,7 @@ func actualizarUsuario(w http.ResponseWriter, r *http.Request) {
 	nuevoUsuario, err := queries.UpdateUser(ctx, usuario)
 	if err != nil {
 		// Si ocurre un error al actualizar el usuario, lanzo código 500 y finalizo la ejecucion del handler
+		log.Printf("Error actualizando usuario: %v", err)
 		http.Error(w, "Error actualizando usuario", http.StatusInternalServerError)
 		return
 	}
@@ -567,6 +599,7 @@ func actualizarUsuario(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(nuevoUsuario)
 	if err != nil {
 		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
+		log.Printf("Error codificando a JSON el usuario actualizado: %v", err)
 		http.Error(w, "Error codificando a JSON el usuario actualizado", http.StatusInternalServerError)
 		return
 	}
@@ -581,7 +614,8 @@ func eliminarUsuario(w http.ResponseWriter, r *http.Request, id_usuario int32) {
 	err := queries.DeleteUsuario(ctx, id_usuario)
 	if err != nil {
 		// Si ocurre un error al eliminar el usuario, lanzo código 500 y finalizo la ejecucion del handler
-		http.Error(w, "Error eliminando partido", http.StatusInternalServerError)
+		log.Printf("Error eliminando usuario: %v", err)
+		http.Error(w, "Error eliminando usuario", http.StatusInternalServerError)
 		return
 	}
 
@@ -629,8 +663,8 @@ type EstadisticaArqueroRequest struct {
 	SaquesCompletados string `json:"saques_completados"` // string porque es obligatorio ("su forma de null" es estar vacio)
 }
 
-// Funciones para handlers de EstadisticasJugador *(*solo para pruebas*)*
-// Funcion para el handler POST EstadisticaJugador
+// Funciones para handlers de EstadisticasJugador
+// Funcion para el handler POST EstadisticaJugador *(*solo para pruebas*)*
 func crearEstadisticasJugador(w http.ResponseWriter, r *http.Request) {
 	// Crea el contexto necesario para las operaciones sqlc
 	ctx := r.Context()
@@ -640,6 +674,7 @@ func crearEstadisticasJugador(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&estadistica)
 	if err != nil {
 		// Si ocurre un error al decodificar el JSON, lanzo un código 400 y finalizo la ejecucion del handler
+		log.Printf("Error al decodificar el JSON para crear la estadistica de jugador: %v", err)
 		http.Error(w, "Los datos envíados son inválidos", http.StatusBadRequest)
 		return
 	}
@@ -664,6 +699,7 @@ func crearEstadisticasJugador(w http.ResponseWriter, r *http.Request) {
 	nuevaEstadistica, err := queries.InsertEstadisticaJugador(ctx, estadistica)
 	if err != nil {
 		// Si ocurre un error al insertar las nuevas estadisticas, lanzo código 500 y finalizo la ejecucion del handler
+		log.Printf("Error creando estadisticas de jugador: %v", err)
 		http.Error(w, "Error creando estadisticas de jugador", http.StatusInternalServerError)
 		return
 	}
@@ -674,7 +710,8 @@ func crearEstadisticasJugador(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(nuevaEstadistica)
 	if err != nil {
 		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
-		http.Error(w, "Error codificando a JSON las estadisticas de jugador creadas", http.StatusInternalServerError)
+		log.Printf("Error codificando a JSON la estadistica de jugador creada: %v", err)
+		http.Error(w, "Error codificando a JSON la estadistica de jugador creada", http.StatusInternalServerError)
 		return
 	}
 }
@@ -694,7 +731,8 @@ func obtenerEstadisticasJugador(w http.ResponseWriter, r *http.Request, id_usuar
 	estadistica, err := queries.GetEstadisticaJugador(ctx, informacionEstadistica)
 	if err != nil {
 		// Si ocurre un error obteniendo la estadistica para un partido y usuario dado, lanzo código 404 y finalizo la ejecucion del handler
-		http.Error(w, fmt.Sprintf("Error obteniendo la estadistica para el partido %d y el usuario %d", id_partido, id_usuario), http.StatusNotFound)
+		log.Printf("Error obteniendo la estadistica de jugador para el partido %d y el usuario %d: %v", id_partido, id_usuario, err)
+		http.Error(w, fmt.Sprintf("Error obteniendo la estadistica de jugador para el partido %d y el usuario %d", id_partido, id_usuario), http.StatusNotFound)
 		return
 	}
 
@@ -704,7 +742,8 @@ func obtenerEstadisticasJugador(w http.ResponseWriter, r *http.Request, id_usuar
 	err = json.NewEncoder(w).Encode(estadistica)
 	if err != nil {
 		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
-		http.Error(w, "Error codificando a JSON la estadistica obtenida", http.StatusInternalServerError)
+		log.Printf("Error codificando a JSON la estadistica de jugador obtenida: %v", err)
+		http.Error(w, "Error codificando a JSON la estadistica de jugador obtenida", http.StatusInternalServerError)
 		return
 	}
 }
@@ -719,6 +758,7 @@ func actualizarEstadisticasJugador(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&estadistica)
 	if err != nil {
 		// Si ocurre un error al decodificar el JSON, lanzo un código 400 y finalizo la ejecucion del handler
+		log.Printf("Error al decodificar el JSON para actualizar la estadistica de jugador: %v", err)
 		http.Error(w, "Los datos envíados son inválidos", http.StatusBadRequest)
 		return
 	}
@@ -741,6 +781,7 @@ func actualizarEstadisticasJugador(w http.ResponseWriter, r *http.Request) {
 	nuevaEstadistica, err := queries.UpdateEstadisticaJugador(ctx, estadistica)
 	if err != nil {
 		// Si ocurre un error al insertar las nuevas estadisticas, lanzo código 500 y finalizo la ejecucion del handler
+		log.Printf("Error actualizando estadisticas de jugador: %v", err)
 		http.Error(w, "Error actualizando estadisticas de jugador", http.StatusInternalServerError)
 		return
 	}
@@ -751,12 +792,13 @@ func actualizarEstadisticasJugador(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(nuevaEstadistica)
 	if err != nil {
 		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
-		http.Error(w, "Error codificando a JSON las estadisticas de jugador actualizadas", http.StatusInternalServerError)
+		log.Printf("Error codificando a JSON la estadistica de jugador actualizada: %v", err)
+		http.Error(w, "Error codificando a JSON la estadistica de jugador actualizada", http.StatusInternalServerError)
 		return
 	}
 }
 
-// Funcion para el handler DELETE EstadisticasJugador
+// Funcion para el handler DELETE EstadisticasJugador *(*solo para pruebas*)*
 func eliminarEstadisticaJugador(w http.ResponseWriter, r *http.Request, id_usuario int32, id_partido int32) {
 	// Crea el contexto necesario para las operaciones sqlc
 	ctx := r.Context()
@@ -771,6 +813,7 @@ func eliminarEstadisticaJugador(w http.ResponseWriter, r *http.Request, id_usuar
 	err := queries.DeleteEstadisticaJugador(ctx, datosEstadisticaJugador)
 	if err != nil {
 		// Si ocurre un error al eliminar la estadistica, lanzo código 500 y finalizo la ejecucion del handler
+		log.Printf("Error eliminando estadisticas de jugador: %v", err)
 		http.Error(w, "Error eliminando estadistica de jugador", http.StatusInternalServerError)
 		return
 	}
@@ -779,8 +822,8 @@ func eliminarEstadisticaJugador(w http.ResponseWriter, r *http.Request, id_usuar
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// Funciones para handlers de EstadisticasArquero *(*solo para pruebas*)*
-// Funcion para el handler POST EstadisticaArquero
+// Funciones para handlers de EstadisticasArquero
+// Funcion para el handler POST EstadisticaArquero *(*solo para pruebas*)*
 func crearEstadisticasArquero(w http.ResponseWriter, r *http.Request) {
 	// Crea el contexto necesario para las operaciones sqlc
 	ctx := r.Context()
@@ -790,6 +833,7 @@ func crearEstadisticasArquero(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&estadistica)
 	if err != nil {
 		// Si ocurre un error al decodificar el JSON, lanzo un código 400 y finalizo la ejecucion del handler
+		log.Printf("Error al decodificar el JSON para crear la estadistica de arquero: %v", err)
 		http.Error(w, "Los datos envíados son inválidos", http.StatusBadRequest)
 		return
 	}
@@ -813,7 +857,7 @@ func crearEstadisticasArquero(w http.ResponseWriter, r *http.Request) {
 	nuevaEstadistica, err := queries.InsertEstadisticaArquero(ctx, estadistica)
 	if err != nil {
 		// Si ocurre un error al insertar las nuevas estadisticas, lanzo código 500 y finalizo la ejecucion del handler
-		log.Printf("Error al conseguir estadistica: %v", err)
+		log.Printf("Error creando estadisticas de arquero: %v", err)
 		http.Error(w, "Error creando estadisticas de arquero", http.StatusInternalServerError)
 		return
 	}
@@ -824,8 +868,8 @@ func crearEstadisticasArquero(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(nuevaEstadistica)
 	if err != nil {
 		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
-		log.Printf("Error al codificar el JSON: %v", err)
-		http.Error(w, "Error codificando a JSON las estadisticas de arquero creadas", http.StatusInternalServerError)
+		log.Printf("Error codificando a JSON la estadistica de arquero creada: %v", err)
+		http.Error(w, "Error codificando a JSON la estadistica de arquero creada", http.StatusInternalServerError)
 		return
 	}
 }
@@ -845,7 +889,8 @@ func obtenerEstadisticasArquero(w http.ResponseWriter, r *http.Request, id_usuar
 	estadistica, err := queries.GetEstadisticaArquero(ctx, informacionEstadistica)
 	if err != nil {
 		// Si ocurre un error obteniendo la estadistica para un partido y usuario dado, lanzo código 404 y finalizo la ejecucion del handler
-		http.Error(w, fmt.Sprintf("Error obteniendo la estadistica para el partido %d y el usuario %d", id_partido, id_usuario), http.StatusNotFound)
+		log.Printf("Error obteniendo la estadistica de arquero para el partido %d y el usuario %d: %v", id_partido, id_usuario, err)
+		http.Error(w, fmt.Sprintf("Error obteniendo la estadistica de arquero para el partido %d y el usuario %d", id_partido, id_usuario), http.StatusNotFound)
 		return
 	}
 
@@ -855,7 +900,8 @@ func obtenerEstadisticasArquero(w http.ResponseWriter, r *http.Request, id_usuar
 	err = json.NewEncoder(w).Encode(estadistica)
 	if err != nil {
 		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
-		http.Error(w, "Error codificando a JSON la estadistica obtenida", http.StatusInternalServerError)
+		log.Printf("Error codificando a JSON la estadistica de arquero obtenida: %v", err)
+		http.Error(w, "Error codificando a JSON la estadistica de arquero obtenida", http.StatusInternalServerError)
 		return
 	}
 }
@@ -870,6 +916,7 @@ func actualizarEstadisticasArquero(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&estadistica)
 	if err != nil {
 		// Si ocurre un error al decodificar el JSON, lanzo un código 400 y finalizo la ejecucion del handler
+		log.Printf("Error al decodificar el JSON para actualizar la estadistica de arquero: %v", err)
 		http.Error(w, "Los datos envíados son inválidos", http.StatusBadRequest)
 		return
 	}
@@ -891,7 +938,7 @@ func actualizarEstadisticasArquero(w http.ResponseWriter, r *http.Request) {
 	nuevaEstadistica, err := queries.UpdateEstadisticaArquero(ctx, estadistica)
 	if err != nil {
 		// Si ocurre un error al insertar las nuevas estadisticas, lanzo código 500 y finalizo la ejecucion del handler
-		log.Printf("Error al actualizar estadisticas de arquero: %v", err)
+		log.Printf("Error actualizando estadisticas de arquero: %v", err)
 		http.Error(w, "Error actualizando estadisticas de arquero", http.StatusInternalServerError)
 		return
 	}
@@ -902,12 +949,13 @@ func actualizarEstadisticasArquero(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(nuevaEstadistica)
 	if err != nil {
 		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
-		http.Error(w, "Error codificando a JSON las estadisticas de arquero actualizadas", http.StatusInternalServerError)
+		log.Printf("Error codificando a JSON la estadistica de arquero actualizada: %v", err)
+		http.Error(w, "Error codificando a JSON la estadistica de arquero actualizada", http.StatusInternalServerError)
 		return
 	}
 }
 
-// Funcion para el handler DELETE EstadisticasArquero
+// Funcion para el handler DELETE EstadisticasArquero *(*solo para pruebas*)*
 func eliminarEstadisticasArquero(w http.ResponseWriter, r *http.Request, id_usuario int32, id_partido int32) {
 	// Crea el contexto necesario para las operaciones sqlc
 	ctx := r.Context()
@@ -922,7 +970,8 @@ func eliminarEstadisticasArquero(w http.ResponseWriter, r *http.Request, id_usua
 	err := queries.DeleteEstadisticaArquero(ctx, datosEstadisticaArquero)
 	if err != nil {
 		// Si ocurre un error al eliminar la estadistica, lanzo código 500 y finalizo la ejecucion del handler
-		http.Error(w, "Error eliminando estadistica de arquero", http.StatusInternalServerError)
+		log.Printf("Error eliminando estadisticas de arquero: %v", err)
+		http.Error(w, "Error eliminando estadisticas de arquero", http.StatusInternalServerError)
 		return
 	}
 
@@ -954,12 +1003,10 @@ func obtenerEstadisticas(w http.ResponseWriter, r *http.Request, id_usuario int3
 	// Obtengo una estadistica de jugador para un partido y un usuario dado, y la guardo en una variable que es puntero a la misma para poder preguntar por nil
 	estadisticaJugador, err := queries.GetEstadisticaJugador(ctx, informacionEstadisticaJugador)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			// Error debido a que no encontró una estadística de jugador, continua el flujo para ver si encuentra estadistica de arquero
-			fmt.Printf("No hay estadística de jugador para partido %d y usuario %d\n", id_partido, id_usuario)
-		} else {
-			// Otro tipo de error al obtener la estadistica, lanzo código 500 y termino la ejecución
-			http.Error(w, "Error interno al obtener estadística del jugador", http.StatusInternalServerError)
+		if !errors.Is(err, sql.ErrNoRows) {
+			// Otro tipo de error (había estadistica de jugador) al obtener la estadistica, lanzo código 500 y termino la ejecución
+			log.Printf("Error interno al obtener estadística de jugador: %v", err)
+			http.Error(w, "Error interno al obtener estadística de jugador", http.StatusInternalServerError)
 			return
 		}
 	} else {
@@ -969,12 +1016,10 @@ func obtenerEstadisticas(w http.ResponseWriter, r *http.Request, id_usuario int3
 	// Obtengo una estadistica para un partido y un usuario dado, y la guardo en una variable que es puntero a la misma para poder preguntar por nil
 	estadisticaArquero, err := queries.GetEstadisticaArquero(ctx, informacionEstadisticaArquero)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			// Error debido a que no encontró una estadística de arquero, continua el flujo para ver si encuentra estadistica de arquero
-			fmt.Printf("No hay estadística de arquero para partido %d y usuario %d\n", id_partido, id_usuario)
-		} else {
-			// Otro tipo de error al obtener la estadistica, lanzo código 500 y termino la ejecución
-			http.Error(w, "Error interno al obtener estadística del arquero", http.StatusInternalServerError)
+		if !errors.Is(err, sql.ErrNoRows) {
+			// Otro tipo de error (había estadistica de arquero) al obtener la estadistica, lanzo código 500 y termino la ejecución
+			log.Printf("Error interno al obtener estadística de arquero: %v", err)
+			http.Error(w, "Error interno al obtener estadística de arquero", http.StatusInternalServerError)
 			return
 		}
 	} else {
@@ -988,6 +1033,7 @@ func obtenerEstadisticas(w http.ResponseWriter, r *http.Request, id_usuario int3
 	if estadisticaJugadorPTR == nil && estadisticaArqueroPTR == nil {
 		// No existe la estadistica buscada, de ninguno de los dos tipos
 		// Si ocurre un error obteniendo la estadistica para un partido y usuario dado, lanzo código 404 y finalizo la ejecucion del handler
+		log.Printf("Error no existen estadisticas de ningun tipo para el partido %d y el usuario %d: %v", id_partido, id_usuario, err)
 		http.Error(w, fmt.Sprintf("Error no existen estadisticas de ningun tipo para el partido %d y el usuario %d", id_partido, id_usuario), http.StatusNotFound)
 		return
 
@@ -1012,6 +1058,7 @@ func obtenerEstadisticas(w http.ResponseWriter, r *http.Request, id_usuario int3
 	err = json.NewEncoder(w).Encode(estadistica)
 	if err != nil {
 		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
+		log.Printf("Error codificando a JSON la estadistica obtenida: %v", err)
 		http.Error(w, "Error codificando a JSON la estadistica obtenida", http.StatusInternalServerError)
 		return
 	}

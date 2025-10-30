@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:16
+    container_name: proyecto_web
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - ${PORT_OUT}:${PORT_IN}
+    volumes:
+      - ./db/schema:/docker-entrypoint-initdb.d
+    networks:
+      - red-app
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "${DB_USER}", "-d", "${DB_NAME}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  api:
+    build: 
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - red-app
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+networks:
+  red-app:
+    driver: bridge
+    name: red-app

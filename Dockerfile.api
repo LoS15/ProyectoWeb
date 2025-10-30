@@ -1,0 +1,40 @@
+# --- ETAPA 1: "BUILDER" (El Constructor) ---
+# Usamos una imagen oficial de Go (basada en Alpine para ser ligera)
+FROM golang:1.25-alpine AS builder
+
+# Establecemos el directorio de trabajo
+WORKDIR /app
+
+# 1. Copiamos los archivos de dependencias (para caché)
+COPY go.mod go.sum ./
+# 2. Descargamos las dependencias
+RUN go mod download
+
+# 3. Copiamos TODO el resto del código fuente
+# Esto incluye main.go, handlers.go, y las carpetas sqlc, queries, etc.
+COPY . .
+
+# 4. Compilamos la aplicación
+# CGO_ENABLED=0 crea un binario estático que no depende de librerías del S.O.
+RUN CGO_ENABLED=0 go build -o /app/main .
+
+# --- ETAPA 2: "FINAL" (La Imagen que usaremos) ---
+# Empezamos desde una imagen de S.O. súper ligera (Alpine pesa ~5MB)
+FROM alpine:latest
+
+# Establecemos el directorio de trabajo
+WORKDIR /app/
+
+# 5. Copiamos el binario compilado desde la etapa "builder"
+COPY --from=builder /app/main .
+
+# 6. ¡IMPORTANTE! Copiamos tus archivos estáticos
+# Tu app (index.html, css, js) también debe ir en la imagen final.
+# Asumo que tu Go sirve los archivos desde una carpeta "static".
+COPY static/ ./static/
+
+# 7. Exponemos el puerto
+EXPOSE 8080
+
+# 8. El comando para arrancar el contenedor
+CMD ["./main"]

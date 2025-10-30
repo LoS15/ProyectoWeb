@@ -65,7 +65,8 @@ document.addEventListener('DOMContentLoaded', () => { //CREO UN EVENT LISTENER P
                 feedbackFormularioUsuario.textContent = `Ha ocurrido un error al intentar registrar el usuario. Error: ${error}`;
                 feedbackFormularioUsuario.style.color = 'red';
             } else {
-                feedbackFormularioUsuario.textContent = 'El formulario ha sido enviado correctamente.';
+                const jsonRespuesta = await response.json();
+                feedbackFormularioUsuario.textContent = `El usuario ha sido creado exitosamente. El usuario creado tiene el IdUsuario: ${jsonRespuesta.id_usuario}. Usalo para crear partidos de este usuario!`;
                 feedbackFormularioUsuario.style.color = 'green';
             }
         } catch (error) {
@@ -204,50 +205,51 @@ async function cargarPartidos() {
         const partidos = await response.json();
         //ahora muestro partidos
         divLista.innerHTML = '';
-        if (partidos.length === 0) { //check que haya partidos existentes
+        if (!partidos || partidos.length === 0) { //check que haya partidos existentes
             divLista.innerHTML = 'No hay partidos registrados.';
             return;
+        } else {
+            partidos.forEach(partido => {
+                const elementoPartido = document.createElement('div');
+                elementoPartido.className = 'elemento-partido';
+                //creo elemento de informacion
+                const infoPartido = document.createElement('p');
+                infoPartido.textContent = `ID Usuario: ${partido.id_usuario}. ID Partido: ${partido.id_partido}. Fecha: ${partido.fecha}. Cancha: ${partido.cancha}. Puntuación: ${partido.puntuacion}.`;
+                //creo boton de estadisticas
+                const botonEstadisticas = document.createElement('button');
+                botonEstadisticas.textContent = 'Ver estadisticas';
+                botonEstadisticas.className = 'boton-estadisticas';
+                botonEstadisticas.type = 'button';
+                //guardo los datos que uso para buscar las estadisticas
+                botonEstadisticas.dataset.idPartido = partido.id_partido;
+                botonEstadisticas.dataset.idUsuario = partido.id_usuario;
+                //creo boton de eliminar partido
+                const botonEliminar = document.createElement('button');
+                botonEliminar.textContent = 'Eliminar partido';
+                botonEliminar.className = 'boton-eliminar-partido';
+                botonEliminar.type = 'button';
+                //guardo los datos que uso para eliminar partido
+                botonEliminar.dataset.idPartido = partido.id_partido;
+                botonEliminar.dataset.idUsuario = partido.id_usuario;
+                //creo boton de modificar partido
+                const botonModificarPartido = document.createElement('button');
+                botonModificarPartido.textContent = 'Modificar partido';
+                botonModificarPartido.className = 'boton-modificar-partido';
+                botonModificarPartido.type = 'button'; //lo hago para asegurarme que no haga submit
+                //guardo los datos necesarios para modificar el usuario
+                botonModificarPartido.dataset.json = JSON.stringify(partido); //le doy todo para q lo use al momento de modificar inplace
+                //crea el div donde estaran las estadisticas
+                const divEstadistica = document.createElement('div');
+                divEstadistica.className = 'div-estadisticas';
+                //armamos el elementoPartido
+                elementoPartido.appendChild(infoPartido);
+                elementoPartido.appendChild(botonEstadisticas);
+                elementoPartido.appendChild(divEstadistica);
+                elementoPartido.appendChild(botonEliminar);
+                elementoPartido.appendChild(botonModificarPartido);
+                divLista.appendChild(elementoPartido);
+            })
         }
-        partidos.forEach(partido => {
-            const elementoPartido = document.createElement('div');
-            elementoPartido.className = 'elemento-partido';
-            //creo elemento de informacion
-            const infoPartido = document.createElement('p');
-            infoPartido.textContent = `ID Usuario: ${partido.id_usuario}. ID Partido: ${partido.id_partido}. Fecha: ${partido.fecha}. Cancha: ${partido.cancha}. Puntuación: ${partido.puntuacion}.`;
-            //creo boton de estadisticas
-            const botonEstadisticas = document.createElement('button');
-            botonEstadisticas.textContent = 'Ver estadisticas';
-            botonEstadisticas.className = 'boton-estadisticas';
-            botonEstadisticas.type = 'button';
-            //guardo los datos que uso para buscar las estadisticas
-            botonEstadisticas.dataset.idPartido = partido.id_partido;
-            botonEstadisticas.dataset.idUsuario = partido.id_usuario;
-            //creo boton de eliminar partido
-            const botonEliminar = document.createElement('button');
-            botonEliminar.textContent = 'Eliminar partido';
-            botonEliminar.className = 'boton-eliminar-partido';
-            botonEliminar.type = 'button';
-            //guardo los datos que uso para eliminar partido
-            botonEliminar.dataset.idPartido = partido.id_partido;
-            botonEliminar.dataset.idUsuario = partido.id_usuario;
-            //creo boton de modificar partido
-            const botonModificarPartido = document.createElement('button');
-            botonModificarPartido.textContent = 'Modificar partido';
-            botonModificarPartido.className = 'boton-modificar-partido';
-            botonModificarPartido.type = 'button'; //lo hago para asegurarme que no haga submit
-            //guardo los datos necesarios para modificar el usuario
-            botonModificarPartido.dataset.json = JSON.stringify(partido); //le doy todo para q lo use al momento de modificar inplace
-            //crea el div donde estaran las estadisticas
-            const divEstadistica = document.createElement('div');
-            divEstadistica.className = 'div-estadisticas';
-            //armamos el elementoPartido
-            elementoPartido.appendChild(infoPartido);
-            elementoPartido.appendChild(botonEstadisticas);
-            elementoPartido.appendChild(divEstadistica);
-            elementoPartido.appendChild(botonEliminar);
-            elementoPartido.appendChild(botonModificarPartido);
-            divLista.appendChild(elementoPartido);
-        })
     } catch (error) {
         divLista.textContent = `Error: ${error.message}.`;
     }
@@ -266,10 +268,11 @@ async function mostrarEstadisticasDePartido(boton){
         );
         if (!response.ok) {
             throw new Error(`No se encontraron estadisticas.`); //no puede suceder en teoria, pero bueno (REVISAR)
-        }
+        } else {}
         const estadisticas = await response.json();
         divEstadistica.innerHTML = ''; //limpio el html (lo inicio mas bien)
         const informacionEstadistica = document.createElement('div'); //debo hacer esta division para agregar el boton luego y este div como hijos
+        informacionEstadistica.className = 'informacion-estadisticas';
         if (estadisticas.tipo_estadistica === 'jugador'){ //son estadisticas de jugador
             informacionEstadistica.innerHTML = ` <strong>Estadisticas Jugador</strong>
                 <p>Goles: ${estadisticas.estadistica_jugador.goles}</p> 
