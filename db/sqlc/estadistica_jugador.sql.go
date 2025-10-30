@@ -7,7 +7,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
 )
 
 const deleteEstadisticaJugador = `-- name: DeleteEstadisticaJugador :exec
@@ -53,12 +52,12 @@ INSERT INTO Estadistica_Jugador(id_usuario, id_partido, goles, asistencias, pase
 `
 
 type InsertEstadisticaJugadorParams struct {
-	IDUsuario        int32          `json:"id_usuario"`
-	IDPartido        int32          `json:"id_partido"`
-	Goles            int32          `json:"goles"`
-	Asistencias      int32          `json:"asistencias"`
-	PasesCompletados sql.NullString `json:"pases_completados"`
-	DuelosGanados    sql.NullString `json:"duelos_ganados"`
+	IDUsuario        int32  `json:"id_usuario"`
+	IDPartido        int32  `json:"id_partido"`
+	Goles            int32  `json:"goles"`
+	Asistencias      int32  `json:"asistencias"`
+	PasesCompletados string `json:"pases_completados"`
+	DuelosGanados    string `json:"duelos_ganados"`
 }
 
 func (q *Queries) InsertEstadisticaJugador(ctx context.Context, arg InsertEstadisticaJugadorParams) (EstadisticaJugador, error) {
@@ -89,12 +88,12 @@ RETURNING id_usuario, id_partido, goles, asistencias, pases_completados, duelos_
 `
 
 type UpdateEstadisticaJugadorParams struct {
-	IDUsuario        int32          `json:"id_usuario"`
-	IDPartido        int32          `json:"id_partido"`
-	Goles            int32          `json:"goles"`
-	Asistencias      int32          `json:"asistencias"`
-	PasesCompletados sql.NullString `json:"pases_completados"`
-	DuelosGanados    sql.NullString `json:"duelos_ganados"`
+	IDUsuario        int32  `json:"id_usuario"`
+	IDPartido        int32  `json:"id_partido"`
+	Goles            int32  `json:"goles"`
+	Asistencias      int32  `json:"asistencias"`
+	PasesCompletados string `json:"pases_completados"`
+	DuelosGanados    string `json:"duelos_ganados"`
 }
 
 func (q *Queries) UpdateEstadisticaJugador(ctx context.Context, arg UpdateEstadisticaJugadorParams) (EstadisticaJugador, error) {

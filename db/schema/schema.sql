@@ -3,7 +3,7 @@ CREATE TABLE Estadistica_Arquero (
     id_partido int  NOT NULL,
     goles_recibidos int  NOT NULL,
     atajadas_clave int  NOT NULL,
-    saques_completados decimal(3,2)  NULL,
+    saques_completados decimal(3,2)  NOT NULL,
     CONSTRAINT PK_ESTADISTICA_ARQUERO PRIMARY KEY (id_usuario, id_partido)
 );
 
@@ -12,8 +12,8 @@ CREATE TABLE Estadistica_Jugador (
     id_partido int  NOT NULL,
     goles int  NOT NULL,
     asistencias int  NOT NULL,
-    pases_completados decimal(3,2)  NULL,
-    duelos_ganados decimal(3,2)  NULL,
+    pases_completados decimal(3,2)  NOT NULL,
+    duelos_ganados decimal(3,2)  NOT NULL,
     CONSTRAINT PK_ESTADISTICA_JUGADOR PRIMARY KEY (id_usuario, id_partido)
 );
 
@@ -36,22 +36,22 @@ CREATE TABLE Usuario (
 
 ALTER TABLE Estadistica_Arquero ADD CONSTRAINT FK_ESTADISTICA_ARQUERO_PARTIDO
     FOREIGN KEY (id_usuario, id_partido)
-    REFERENCES Partido (id_usuario, id_partido)
-    NOT DEFERRABLE 
+    REFERENCES Partido (id_usuario, id_partido) ON DELETE CASCADE
+    NOT DEFERRABLE
     INITIALLY IMMEDIATE
 ;
 
 ALTER TABLE Estadistica_Jugador ADD CONSTRAINT FK_ESTADISTICA_JUGADOR_PARTIDO
     FOREIGN KEY (id_usuario, id_partido)
-    REFERENCES Partido (id_usuario, id_partido)
-    NOT DEFERRABLE 
+    REFERENCES Partido (id_usuario, id_partido) ON DELETE CASCADE
+    NOT DEFERRABLE
     INITIALLY IMMEDIATE
 ;
 
 ALTER TABLE Partido ADD CONSTRAINT FK_PARTIDO_USUARIO
     FOREIGN KEY (id_usuario)
-    REFERENCES Usuario (id_usuario)  
-    NOT DEFERRABLE 
+    REFERENCES Usuario (id_usuario)
+    NOT DEFERRABLE
     INITIALLY IMMEDIATE
 ;
 

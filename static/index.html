@@ -3,7 +3,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BitacoraFutbol</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <header id="header">
@@ -77,11 +77,11 @@
                 </div>
                 <div>
                     <label for="pases_completados">Pases Completados (%):</label>
-                    <input type="number" id="pases_completados" name="pases_completados" step="0.01" min="0" max="1" value="0">
+                    <input type="number" id="pases_completados" name="pases_completados" step="0.01" min="0" max="1" value="0" required>
                 </div>
                 <div>
                     <label for="duelos_ganados">Duelos Ganados (%):</label>
-                    <input type="number" id="duelos_ganados" name="duelos_ganados" step="0.01" min="0" max="1" value="0">
+                    <input type="number" id="duelos_ganados" name="duelos_ganados" step="0.01" min="0" max="1" value="0" required>
                 </div>
             </fieldset>
             <fieldset id="estadisticas-arquero" style="display: none;">
@@ -96,7 +96,7 @@
                 </div>
                 <div>
                     <label for="saques_completados">Saques Completados (%):</label>
-                    <input type="number" id="saques_completados" name="saques_completados" step="0.01" min="0" max="1" value="0">
+                    <input type="number" id="saques_completados" name="saques_completados" step="0.01" min="0" max="1" value="0" required>
                 </div>
             </fieldset>
             <div>
@@ -126,10 +126,10 @@
             <input type="number" name="asistencias" step="1" value="0" required>
 
             <label>Pases completados (%):</label>
-            <input type="number" name="pases_completados" step="0.01" value=0 min="0" max="1">
+            <input type="number" name="pases_completados" step="0.01" value=0 min="0" max="1" required>
 
             <label>Duelos ganados (%):</label>
-            <input type="number" name="duelos_ganados" step="0.01" value=0 min="0" max="1">
+            <input type="number" name="duelos_ganados" step="0.01" value=0 min="0" max="1" required>
 
             <button type="submit">Guardar Cambios</button>
             <button type="button" class="boton-cancelar-mod">Cancelar</button>
@@ -139,8 +139,8 @@
     <template id="template-formulario-arquero">
         <form class="formulario-modificar-estadisticas">
             <input type="hidden" name="tipo" value="arquero">
-            <input type="hidden" name="id_partido" value="">
-            <input type="hidden" name="id_usuario" value="">
+            <input type="hidden" name="id_partido" required>
+            <input type="hidden" name="id_usuario" required>
 
             <label>Goles Recibidos:</label>
             <input type="number" name="goles_recibidos" step="1" value="0" required>
@@ -149,7 +149,7 @@
             <input type="number" name="atajadas_clave" step="1" value="0" required>
 
             <label>Saques completados (%):</label>
-            <input type="number" name="saques_completados" step="0.01" value="0" min="0" max="1">
+            <input type="number" name="saques_completados" step="0.01" value="0" min="0" max="1" required>
 
             <button type="submit">Guardar Cambios</button>
             <button type="button" class="boton-cancelar-mod">Cancelar</button>
@@ -175,5 +175,5 @@
         </form>
     </template>
 
-    <script src="app.js"></script>
+    <script src="/static/app.js"></script>
 </body>

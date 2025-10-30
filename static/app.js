@@ -109,8 +109,8 @@ document.addEventListener('DOMContentLoaded', () => { //CREO UN EVENT LISTENER P
             id_usuario: parseInt(data.id_usuario),
             fecha: data.fecha_partido + "T00:00:00Z",
             cancha: data.cancha,
-            tipo_estadistica: data.tipo_estadistica,
             puntuacion : parseInt(data.puntuacion),
+            tipo_estadistica: data.tipo_estadistica,
             estadistica_jugador: null,
             estadistica_arquero: null,
         }
@@ -119,14 +119,14 @@ document.addEventListener('DOMContentLoaded', () => { //CREO UN EVENT LISTENER P
             json_partido.estadistica_jugador = {
                 goles:parseInt(data.goles),
                 asistencias:parseInt(data.asistencias),
-                pases_completados: parseFloat(data.pases_completados),
-                duelos_ganados: parseFloat(data.duelos_ganados)
+                pases_completados: data.pases_completados,
+                duelos_ganados: data.duelos_ganados
             }
         } else {
             json_partido.estadistica_arquero = {
                 goles_recibidos: parseInt(data.goles_recibidos),
                 atajadas_clave: parseInt(data.atajadas_clave),
-                saques_completados: parseFloat(data.saques_completados)
+                saques_completados: data.saques_completados
             }
         }
         //ahora envio el JSON con fetch
@@ -327,15 +327,16 @@ async function mostrarFormularioModificacionEstadisticas(boton){
     }
     //ahora creo una copia del template que puede ingresarse al DOM de la pagina
     const templateDom = template.content.cloneNode(true);
-    //relleno los placeholders con los valores que le corresponde, eso hace que pueda editar los valores in place, e intentar luego enviar la modificacion a la BD
-    templateDom.querySelector('[name="id_usuario"]').value = estadisticas.id_usuario;
-    templateDom.querySelector('[name="id_partido"]').value = estadisticas.id_partido;
     if (tipoEstadistica === 'jugador'){
+        templateDom.querySelector('[name="id_usuario"]').value = estadisticas.estadistica_jugador.id_usuario;
+        templateDom.querySelector('[name="id_partido"]').value = estadisticas.estadistica_jugador.id_partido;
         templateDom.querySelector('[name="goles"]').value = estadisticas.estadistica_jugador.goles;
         templateDom.querySelector('[name="asistencias"]').value = estadisticas.estadistica_jugador.asistencias;
         templateDom.querySelector('[name="pases_completados"]').value = estadisticas.estadistica_jugador.pases_completados;
         templateDom.querySelector('[name="duelos_ganados"]').value = estadisticas.estadistica_jugador.duelos_ganados;
     } else {
+        templateDom.querySelector('[name="id_usuario"]').value = estadisticas.estadistica_arquero.id_usuario;
+        templateDom.querySelector('[name="id_partido"]').value = estadisticas.estadistica_arquero.id_partido;
         templateDom.querySelector('[name="goles_recibidos"]').value = estadisticas.estadistica_arquero.goles_recibidos;
         templateDom.querySelector('[name="atajadas_clave"]').value = estadisticas.estadistica_arquero.atajadas_clave;
         templateDom.querySelector('[name="saques_completados"]').value = estadisticas.estadistica_arquero.saques_completados;
@@ -354,27 +355,31 @@ async function modificarEstadisticasPartido(formulario){
     const divEstadistica = formulario.parentElement;
     divEstadistica.innerHTML = 'Guardando cambios...';
     //diferenciamos entre jugador y arquero para armar el JSON
+    const jsonArquero = data.arquero;
+    let call_path;
     if (tipoEstadistica === 'jugador'){
         jsonEstadistica = {
             id_usuario: parseInt(data.id_usuario),
             id_partido: parseInt(data.id_partido),
             goles: parseInt(data.goles),
             asistencias: parseInt(data.asistencias),
-            pases_completados: parseFloat(data.pases_completados),
-            duelos_ganados: parseFloat(data.duelos_ganados)
+            pases_completados: data.pases_completados,
+            duelos_ganados: data.duelos_ganados
         }
+        call_path = `/estadisticas-jugador`;
     } else {
         jsonEstadistica = {
             id_usuario: parseInt(data.id_usuario),
             id_partido: parseInt(data.id_partido),
             goles_recibidos: parseInt(data.goles_recibidos),
             atajadas_clave: parseInt(data.atajadas_clave),
-            saques_completados: parseFloat(data.saques_completados),
+            saques_completados: data.saques_completados,
         }
+        call_path = `/estadisticas-arquero`;
     }
     //ahora que el JSON esta listo, llamo a la funcion para enviar a guardar los cambios
     try {
-        const response = await fetch('/estadisticas', { //revisar el endpoint mas adelante
+        const response = await fetch(call_path, {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(jsonEstadistica),
@@ -382,9 +387,10 @@ async function modificarEstadisticasPartido(formulario){
         if (!response.ok) {
             const error = await response.text();
             throw new Error(error);
+        } else {
+            console.log("Modificacion exitosa. Recargando lista"); //consultar si debemos refrescar toda la lista o solo el elemento modificado
+            cargarPartidos()
         }
-        console.log("Modificacion exitosa. Recargando lista"); //consultar si debemos refrescar toda la lista o solo el elemento modificado
-        cargarPartidos()
     } catch (error) {
         divEstadistica.innerHTML = `Error al intentar modificar las estadisticas: ${error.message}`;
     }
@@ -400,7 +406,7 @@ async function mostrarFormularioModificacionPartido(boton) {
     //relleno los placeholders con los valores que le corresponde, eso hace que pueda editar los valores in place, e intentar luego enviar la modificacion a la BD
     templateDom.querySelector('[name="id_usuario"]').value = info_partido.id_usuario;
     templateDom.querySelector('[name="id_partido"]').value = info_partido.id_partido;
-    templateDom.querySelector('[name="fecha_partido"]').value = new Date(info_partido.fecha).toISOString().split('T')[0]; //hay que convertirla en yy/mm/dd
+    templateDom.querySelector('[name="fecha_partido"]').value = new Date(info_partido.fecha).toISOString().split('T')[0];//hay que convertirla en yy/mm/dd
     templateDom.querySelector('[name="cancha"]').value = info_partido.cancha;
     templateDom.querySelector('[name="puntuacion"]').value = info_partido.puntuacion;
     //ahora asigno el formulario al innerHTML,
@@ -414,7 +420,7 @@ async function modificarPartido(formulario){
     const jsonPartido = {
         id_usuario: parseInt(data.id_usuario),
         id_partido: parseInt(data.id_partido),
-        fecha_partido: data.fecha_partido,
+        fecha: data.fecha_partido + "T00:00:00Z",
         cancha: data.cancha,
         puntuacion: parseInt(data.puntuacion),
     };
@@ -423,7 +429,7 @@ async function modificarPartido(formulario){
     divPartido.innerHTML = 'Guardando cambios...';
     //ahora que el JSON esta listo, llamo a la funcion para enviar a guardar los cambios
     try {
-        const response = await fetch(`/partidos/${data.id_usuario}/${data.id_partido}`, { //revisar el endpoint mas adelante
+        const response = await fetch(`/partidos`, { //revisar el endpoint mas adelante
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(jsonPartido),

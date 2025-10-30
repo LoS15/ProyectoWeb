@@ -5,25 +5,24 @@
 package db
 
 import (
-	"database/sql"
 	"time"
 )
 
 type EstadisticaArquero struct {
-	IDUsuario         int32          `json:"id_usuario"`
-	IDPartido         int32          `json:"id_partido"`
-	GolesRecibidos    int32          `json:"goles_recibidos"`
-	AtajadasClave     int32          `json:"atajadas_clave"`
-	SaquesCompletados sql.NullString `json:"saques_completados"`
+	IDUsuario         int32  `json:"id_usuario"`
+	IDPartido         int32  `json:"id_partido"`
+	GolesRecibidos    int32  `json:"goles_recibidos"`
+	AtajadasClave     int32  `json:"atajadas_clave"`
+	SaquesCompletados string `json:"saques_completados"`
 }
 
 type EstadisticaJugador struct {
-	IDUsuario        int32          `json:"id_usuario"`
-	IDPartido        int32          `json:"id_partido"`
-	Goles            int32          `json:"goles"`
-	Asistencias      int32          `json:"asistencias"`
-	PasesCompletados sql.NullString `json:"pases_completados"`
-	DuelosGanados    sql.NullString `json:"duelos_ganados"`
+	IDUsuario        int32  `json:"id_usuario"`
+	IDPartido        int32  `json:"id_partido"`
+	Goles            int32  `json:"goles"`
+	Asistencias      int32  `json:"asistencias"`
+	PasesCompletados string `json:"pases_completados"`
+	DuelosGanados    string `json:"duelos_ganados"`
 }
 
 type Partido struct {
