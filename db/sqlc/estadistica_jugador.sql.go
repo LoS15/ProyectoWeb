@@ -10,6 +10,43 @@ import (
 	"database/sql"
 )
 
+const deleteEstadisticaJugador = `-- name: DeleteEstadisticaJugador :exec
+DELETE FROM Estadistica_Jugador WHERE id_usuario = $1 AND id_partido = $2
+`
+
+type DeleteEstadisticaJugadorParams struct {
+	IDUsuario int32 `json:"id_usuario"`
+	IDPartido int32 `json:"id_partido"`
+}
+
+func (q *Queries) DeleteEstadisticaJugador(ctx context.Context, arg DeleteEstadisticaJugadorParams) error {
+	_, err := q.db.ExecContext(ctx, deleteEstadisticaJugador, arg.IDUsuario, arg.IDPartido)
+	return err
+}
+
+const getEstadisticaJugador = `-- name: GetEstadisticaJugador :one
+SELECT id_usuario, id_partido, goles, asistencias, pases_completados, duelos_ganados FROM Estadistica_Jugador WHERE id_usuario = $1 AND id_partido = $2
+`
+
+type GetEstadisticaJugadorParams struct {
+	IDUsuario int32 `json:"id_usuario"`
+	IDPartido int32 `json:"id_partido"`
+}
+
+func (q *Queries) GetEstadisticaJugador(ctx context.Context, arg GetEstadisticaJugadorParams) (EstadisticaJugador, error) {
+	row := q.db.QueryRowContext(ctx, getEstadisticaJugador, arg.IDUsuario, arg.IDPartido)
+	var i EstadisticaJugador
+	err := row.Scan(
+		&i.IDUsuario,
+		&i.IDPartido,
+		&i.Goles,
+		&i.Asistencias,
+		&i.PasesCompletados,
+		&i.DuelosGanados,
+	)
+	return i, err
+}
+
 const insertEstadisticaJugador = `-- name: InsertEstadisticaJugador :one
 INSERT INTO Estadistica_Jugador(id_usuario, id_partido, goles, asistencias, pases_completados, duelos_ganados) VALUES ($1, $2, $3, $4, $5, $6)
     RETURNING id_usuario, id_partido, goles, asistencias, pases_completados, duelos_ganados

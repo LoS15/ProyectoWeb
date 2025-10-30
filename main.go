@@ -4,9 +4,10 @@ import (
 	db "ProyectoWeb/db/sqlc"
 	"database/sql"
 	"fmt"
-	_ "github.com/lib/pq"
 	"log"
 	"net/http"
+
+	_ "github.com/lib/pq"
 )
 
 // Variables globales para poder acceder desde handlers.go
@@ -16,6 +17,8 @@ var (
 )
 
 func main() {
+	fs := http.FileServer(http.Dir("static"))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
 	http.HandleFunc("/", ServeIndex)
 	http.HandleFunc("/partidos", PartidosHandler)
 	http.HandleFunc("/partidos/", PartidosHandler)

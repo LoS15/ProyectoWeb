@@ -10,4 +10,4 @@ services:
     ports:
       - ${PORT_OUT}:${PORT_IN}
     volumes:
-      - ${DB_VOLUME_PATH}:/var/lib/postgresql/data
+      - ./db/schema:/docker-entrypoint-initdb.d

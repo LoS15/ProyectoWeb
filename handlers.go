@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv" //Para la validacion de floats
 	"strings" //Para la validacion de floats
@@ -19,11 +20,11 @@ type CrearPartidoCompletoRequest struct {
 	Cancha             string                             `json:"cancha"`
 	Puntuacion         int32                              `json:"puntuacion"`
 	TipoEstadistica    string                             `json:"tipo_estadistica"`
-	EstadisticaJugador *db.InsertEstadisticaJugadorParams `json:"estadisticas_jugador,omitempty"`
+	EstadisticaJugador *db.InsertEstadisticaJugadorParams `json:"estadistica_jugador,omitempty"`
 	EstadisticaArquero *db.InsertEstadisticaArqueroParams `json:"estadistica_arquero,omitempty"`
 }
 
-// Tipos para poder hacer chequeos de nulos en tipos primitivos que no permiten control de nulos
+// Tipos para poder hacer chequeos de nulos en tipos primitivos que no permiten control de nulos -- PARTIDO
 // Para la inserción de partidos
 type PartidoCrearRequest struct {
 	IDUsuario  *int32     `json:"id_usuario"` // puntero para saber si es null
@@ -41,30 +42,15 @@ type PartidoActualizacionRequest struct {
 	Puntuacion *int32     `json:"puntuacion"` // puntero para saber si es null
 }
 
-// Para la inserción de estadisticas
-type EstadisticaJugadorRequest struct {
-	Goles            *int32         `json:"goles"`                       // puntero para saber si vino
-	Asistencias      *int32         `json:"asistencias"`                 // puntero para saber si vino
-	PasesCompletados sql.NullString `json:"pases_completados,omitempty"` // sql.NullString porque es opcional ("su forma de null" es estar vacio o ser null)
-	DuelosGanados    sql.NullString `json:"duelos_ganados,omitempty"`    // sql.NullString porque es opcional ("su forma de null" es estar vacio o ser null)
-}
-
-// Para la inserción de estadisticas
-type EstadisticaArqueroRequest struct {
-	GolesRecibidos    *int32         `json:"goles_recibidos"`    // puntero para saber si vino
-	AtajadasClave     *int32         `json:"atajadas_clave"`     // puntero para saber si vino
-	SaquesCompletados sql.NullString `json:"saques_completados"` // sql.NullString porque es opcional ("su forma de null" es estar vacio o ser null)
-}
-
 // Funciones para handlers de Partido
-// Funcion para el handler POST partido (solo crear partido, para pruebas únicamente)
+// Funcion para el handler POST partido (solo crear partido) *(*solo para pruebas*)*
 func crearPartido(w http.ResponseWriter, r *http.Request) {
 	// Crea el contexto necesario para las operaciones sqlc
 	ctx := r.Context()
 
-	// Decodificar el JSON para la inserción del partido
-	var request CrearPartidoCompletoRequest
-	err := json.NewDecoder(r.Body).Decode(&request)
+	// Decodificar el JSON
+	var partido db.InsertPartidoParams
+	err := json.NewDecoder(r.Body).Decode(&partido)
 	if err != nil {
 		// Si ocurre un error al decodificar el JSON, lanzo un código 400 y finalizo la ejecucion del handler
 		http.Error(w, "Los datos envíados son inválidos", http.StatusBadRequest)
@@ -73,10 +59,10 @@ func crearPartido(w http.ResponseWriter, r *http.Request) {
 
 	// Valido los datos del JSON para la creacion del partido
 	partidoReq := PartidoCrearRequest{
-		IDUsuario:  &request.IDUsuario,
-		Fecha:      &request.Fecha,
-		Cancha:     request.Cancha,
-		Puntuacion: &request.Puntuacion,
+		IDUsuario:  &partido.IDUsuario,
+		Fecha:      &partido.Fecha,
+		Cancha:     partido.Cancha,
+		Puntuacion: &partido.Puntuacion,
 	}
 	err = validarCreacionPartido(partidoReq)
 	if err != nil {
@@ -85,16 +71,8 @@ func crearPartido(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Creo el partido para insertar
-	datosNuevoPartido := db.InsertPartidoParams{
-		IDUsuario:  request.IDUsuario,
-		Fecha:      request.Fecha,
-		Cancha:     request.Cancha,
-		Puntuacion: request.Puntuacion,
-	}
-
 	// Inserto en la tabla Partido el nuevo partido
-	nuevoPartido, err := queries.InsertPartido(ctx, datosNuevoPartido)
+	nuevoPartido, err := queries.InsertPartido(ctx, partido)
 	if err != nil {
 		// Si ocurre un error al insertar el nuevo partido, lanzo código 500 y finalizo la ejecucion del handler
 		http.Error(w, "Error creando partido", http.StatusInternalServerError)
@@ -174,7 +152,7 @@ func crearPartidoCompleto(w http.ResponseWriter, r *http.Request) {
 	// Creo las estadisticas del partido, segun el tipo
 	switch request.TipoEstadistica {
 	case "jugador":
-		// Si el tipo de estadisticas es de jugador de campo
+		// Si el tipo de estadisticas es de jugador
 
 		if request.EstadisticaJugador == nil {
 			// Si las estadisticas no están cargadas, lanzo código 400 y finalizo la ejecucion del handler
@@ -182,7 +160,7 @@ func crearPartidoCompleto(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Valido los datos del JSON de las estadisticas, en este caso de jugador
+		// Valido los datos del JSON de las estadisticas de jugador
 		estadisticasJugadorReq := EstadisticaJugadorRequest{
 			Goles:            &request.EstadisticaJugador.Goles,
 			Asistencias:      &request.EstadisticaJugador.Asistencias,
@@ -206,6 +184,7 @@ func crearPartidoCompleto(w http.ResponseWriter, r *http.Request) {
 			DuelosGanados:    request.EstadisticaJugador.DuelosGanados,
 		}
 
+		// Inserto en la tabla EstadisticaJugador la nueva estadistica de jugador
 		_, err = qtran.InsertEstadisticaJugador(ctx, datosNuevaEstadisticaJugador)
 		if err != nil {
 			// Si ocurre un error al insertar las nuevas estadisticas, lanzo código 500 y finalizo la ejecucion del handler
@@ -222,7 +201,7 @@ func crearPartidoCompleto(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Valido los datos del JSON de las estadisticas, en este caso de arquero
+		// Valido los datos del JSON de las estadisticas de arquero
 		estadisticasArqueroReq := EstadisticaArqueroRequest{
 			GolesRecibidos:    &request.EstadisticaArquero.GolesRecibidos,
 			AtajadasClave:     &request.EstadisticaArquero.AtajadasClave,
@@ -244,6 +223,7 @@ func crearPartidoCompleto(w http.ResponseWriter, r *http.Request) {
 			SaquesCompletados: request.EstadisticaArquero.SaquesCompletados,
 		}
 
+		// Inserto en la tabla EstadisticaArquero la nueva estadistica de arquero
 		_, err = qtran.InsertEstadisticaArquero(ctx, datosNuevaEstadisticaArquero)
 		if err != nil {
 			// Si ocurre un error al insertar las nuevas estadisticas, lanzo código 500 y finalizo la ejecucion del handler
@@ -275,7 +255,7 @@ func crearPartidoCompleto(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Funcion para el handler GET todos los partidos
+// Funcion para el handler GET todos los partidos *(*solo para pruebas*)*
 func listarTodosLosPartidos(w http.ResponseWriter, r *http.Request) {
 	// Crea el contexto necesario para las operaciones sqlc
 	ctx := r.Context()
@@ -342,7 +322,7 @@ func obtenerPartidoPorUsuario(w http.ResponseWriter, r *http.Request, id_usuario
 		return
 	}
 
-	// Establezco el header de respuesta de tipo JSON, lanzo código 200 y respondo con los partidos listados para el usuario en formato JSON
+	// Establezco el header de respuesta de tipo JSON, lanzo código 200 y respondo con el partido para el usuario dado en formato JSON
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(w).Encode(partido)
@@ -382,17 +362,8 @@ func actualizarPartido(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Creo el objeto para actualizar el partido
-	datosPartido := db.UpdatePartidoParams{
-		IDUsuario:  partido.IDUsuario,
-		IDPartido:  partido.IDPartido,
-		Fecha:      partido.Fecha,
-		Cancha:     partido.Cancha,
-		Puntuacion: partido.Puntuacion,
-	}
-
-	// Actualizo el partido
-	nuevoPartido, err := queries.UpdatePartido(ctx, datosPartido)
+	// Actualizo en la tabla Partido el partido
+	nuevoPartido, err := queries.UpdatePartido(ctx, partido)
 	if err != nil {
 		// Si ocurre un error al actualizar el partido, lanzo código 500 y finalizo la ejecucion del handler
 		http.Error(w, "Error actualizando partido", http.StatusInternalServerError)
@@ -421,7 +392,7 @@ func eliminarPartido(w http.ResponseWriter, r *http.Request, id_usuario int32, i
 		IDPartido: id_partido,
 	}
 
-	// Elimino el partido
+	// Elimino de la tabla Partido el partido
 	err := queries.DeletePartido(ctx, datosPartido)
 	if err != nil {
 		// Si ocurre un error al eliminar el partido, lanzo código 500 y finalizo la ejecucion del handler
@@ -433,7 +404,7 @@ func eliminarPartido(w http.ResponseWriter, r *http.Request, id_usuario int32, i
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// Tipo para poder hacer chequeo de nulos en tipos primitivos que no permiten control de nulos
+// Tipo para poder hacer chequeo de nulos en tipos primitivos que no permiten control de nulos -- USUARIO
 // Para la actualizacion de usuarios
 type UsuarioActualizacionRequest struct {
 	IDUsuario *int32 `json:"id_usuario"`
@@ -465,7 +436,7 @@ func crearUsuario(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Creo el usuario
+	// Inserto en la tabla Usuario el nuevo usuario
 	usuario, err := queries.CreateUser(ctx, nuevoUsuario)
 	if err != nil {
 		// Si ocurre un error al insertar el nuevo usuario, lanzo código 500 y finalizo la ejecucion del handler
@@ -484,7 +455,7 @@ func crearUsuario(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Funcion para el handler GET todos los usuario
+// Funcion para el handler GET todos los usuario *(*solo para pruebas*)*
 func listarTodosLosUsuarios(w http.ResponseWriter, r *http.Request) {
 	// Crea el contexto necesario para las operaciones sqlc
 	ctx := r.Context()
@@ -560,16 +531,8 @@ func actualizarUsuario(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Creo el objeto para actualizar el usuario
-	datosUsuario := db.UpdateUserParams{
-		IDUsuario: usuario.IDUsuario,
-		Nombre:    usuario.Nombre,
-		Apellido:  usuario.Apellido,
-		Pais:      usuario.Pais,
-	}
-
-	// Actualizo el usuario
-	nuevoUsuario, err := queries.UpdateUser(ctx, datosUsuario)
+	// Actualizo en la tabla Usuario el usuario
+	nuevoUsuario, err := queries.UpdateUser(ctx, usuario)
 	if err != nil {
 		// Si ocurre un error al actualizar el usuario, lanzo código 500 y finalizo la ejecucion del handler
 		http.Error(w, "Error actualizando usuario", http.StatusInternalServerError)
@@ -592,7 +555,7 @@ func eliminarUsuario(w http.ResponseWriter, r *http.Request, id_usuario int32) {
 	// Crea el contexto necesario para las operaciones sqlc
 	ctx := r.Context()
 
-	// Elimino el partido
+	// Elimino en la tabla Partido el partido
 	err := queries.DeleteUsuario(ctx, id_usuario)
 	if err != nil {
 		// Si ocurre un error al eliminar el usuario, lanzo código 500 y finalizo la ejecucion del handler
@@ -604,8 +567,423 @@ func eliminarUsuario(w http.ResponseWriter, r *http.Request, id_usuario int32) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// Funciones para handlers de Estadisticas
-// Funcion para el handler POST Estadistica
+// Tipo para poder hacer chequeo de nulos en tipos primitivos que no permiten control de nulos -- ESTADISTICAS AMBAS
+// Para la insercion de estadisticas *(*solo para pruebas*)*
+type EstadisticaCrearJugadorRequest struct {
+	IDUsuario        *int32         `json:"id_usuario"`                  // puntero para saber si es null
+	IDPartido        *int32         `json:"id_partido"`                  // puntero para saber si es null
+	Goles            *int32         `json:"goles"`                       // puntero para saber si vino
+	Asistencias      *int32         `json:"asistencias"`                 // puntero para saber si vino
+	PasesCompletados sql.NullString `json:"pases_completados,omitempty"` // sql.NullString porque es opcional ("su forma de null" es estar vacio o ser null)
+	DuelosGanados    sql.NullString `json:"duelos_ganados,omitempty"`    // sql.NullString porque es opcional ("su forma de null" es estar vacio o ser null)
+}
+
+type EstadisticaCrearArqueroRequest struct {
+	IDUsuario         *int32         `json:"id_usuario"`         // puntero para saber si es null
+	IDPartido         *int32         `json:"id_partido"`         // puntero para saber si es null
+	GolesRecibidos    *int32         `json:"goles_recibidos"`    // puntero para saber si vino
+	AtajadasClave     *int32         `json:"atajadas_clave"`     // puntero para saber si vino
+	SaquesCompletados sql.NullString `json:"saques_completados"` // sql.NullString porque es opcional ("su forma de null" es estar vacio o ser null)
+}
+
+// Para retornar una estadistica independientemente de su tipo
+type RetornoEstadistica struct {
+	TipoEstadistica    string                 `json:"tipo_estadistica"`
+	EstadisticaJugador *db.EstadisticaJugador `json:"estadistica_jugador,omitempty"`
+	EstadisticaArquero *db.EstadisticaArquero `json:"estadistica_arquero,omitempty"`
+}
+
+// Para la actualizacion e insercion (en el flujo de insercion de partido completo) de estadisticas
+type EstadisticaJugadorRequest struct {
+	Goles            *int32         `json:"goles"`                       // puntero para saber si vino
+	Asistencias      *int32         `json:"asistencias"`                 // puntero para saber si vino
+	PasesCompletados sql.NullString `json:"pases_completados,omitempty"` // sql.NullString porque es opcional ("su forma de null" es estar vacio o ser null)
+	DuelosGanados    sql.NullString `json:"duelos_ganados,omitempty"`    // sql.NullString porque es opcional ("su forma de null" es estar vacio o ser null)
+}
+
+type EstadisticaArqueroRequest struct {
+	GolesRecibidos    *int32         `json:"goles_recibidos"`    // puntero para saber si vino
+	AtajadasClave     *int32         `json:"atajadas_clave"`     // puntero para saber si vino
+	SaquesCompletados sql.NullString `json:"saques_completados"` // sql.NullString porque es opcional ("su forma de null" es estar vacio o ser null)
+}
+
+// Funciones para handlers de EstadisticasJugador *(*solo para pruebas*)*
+// Funcion para el handler POST EstadisticaJugador
+func crearEstadisticasJugador(w http.ResponseWriter, r *http.Request) {
+	// Crea el contexto necesario para las operaciones sqlc
+	ctx := r.Context()
+
+	// Decodificar el JSON de la request
+	var estadistica db.InsertEstadisticaJugadorParams
+	err := json.NewDecoder(r.Body).Decode(&estadistica)
+	if err != nil {
+		// Si ocurre un error al decodificar el JSON, lanzo un código 400 y finalizo la ejecucion del handler
+		http.Error(w, "Los datos envíados son inválidos", http.StatusBadRequest)
+		return
+	}
+
+	// Valido los datos del JSON de las estadisticas de jugador
+	estadisticasJugadorReq := EstadisticaCrearJugadorRequest{
+		IDUsuario:        &estadistica.IDUsuario,
+		IDPartido:        &estadistica.IDPartido,
+		Goles:            &estadistica.Goles,
+		Asistencias:      &estadistica.Asistencias,
+		PasesCompletados: estadistica.PasesCompletados,
+		DuelosGanados:    estadistica.DuelosGanados,
+	}
+	err = validarCrearEstadisticasJugador(estadisticasJugadorReq)
+	if err != nil {
+		// Si hay error en la validación de las estadisticas, lanzo código 400 y termino la ejecución del handler
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Inserto en la tabla EstadisticaJugador la nueva estadistica de jugador
+	nuevaEstadistica, err := queries.InsertEstadisticaJugador(ctx, estadistica)
+	if err != nil {
+		// Si ocurre un error al insertar las nuevas estadisticas, lanzo código 500 y finalizo la ejecucion del handler
+		http.Error(w, "Error creando estadisticas de jugador", http.StatusInternalServerError)
+		return
+	}
+
+	// Establezco el header de respuesta de tipo JSON, lanzo el código 201 y respondo con las estadisticas de jugador como JSON
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(nuevaEstadistica)
+	if err != nil {
+		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
+		http.Error(w, "Error codificando a JSON las estadisticas de jugador creadas", http.StatusInternalServerError)
+		return
+	}
+}
+
+// Funcion para el handler GET EstadisticaJugador para un partido y usuario dado
+func obtenerEstadisticasJugador(w http.ResponseWriter, r *http.Request, id_usuario int32, id_partido int32) {
+	// Crea el contexto necesario para las operaciones sqlc
+	ctx := r.Context()
+
+	// Crea el tipo auxiliar necesario para la operación sqlc
+	informacionEstadistica := db.GetEstadisticaJugadorParams{
+		IDUsuario: id_usuario,
+		IDPartido: id_partido,
+	}
+
+	// Obtengo una estadistica para un partido y un usuario dado
+	estadistica, err := queries.GetEstadisticaJugador(ctx, informacionEstadistica)
+	if err != nil {
+		// Si ocurre un error obteniendo la estadistica para un partido y usuario dado, lanzo código 404 y finalizo la ejecucion del handler
+		http.Error(w, fmt.Sprintf("Error obteniendo la estadistica para el partido %d y el usuario %d", id_partido, id_usuario), http.StatusNotFound)
+		return
+	}
+
+	// Establezco el header de respuesta de tipo JSON, lanzo código 200 y respondo con los partidos listados para el usuario en formato JSON
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(estadistica)
+	if err != nil {
+		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
+		http.Error(w, "Error codificando a JSON la estadistica obtenida", http.StatusInternalServerError)
+		return
+	}
+}
+
+// Funcion para el handler PUT EstadisticaJugador
+func actualizarEstadisticasJugador(w http.ResponseWriter, r *http.Request) {
+	// Crea el contexto necesario para las operaciones sqlc
+	ctx := r.Context()
+
+	// Decodificar el JSON de la request
+	var estadistica db.UpdateEstadisticaJugadorParams
+	err := json.NewDecoder(r.Body).Decode(&estadistica)
+	if err != nil {
+		// Si ocurre un error al decodificar el JSON, lanzo un código 400 y finalizo la ejecucion del handler
+		http.Error(w, "Los datos envíados son inválidos", http.StatusBadRequest)
+		return
+	}
+
+	// Valido los datos del JSON de las estadisticas de jugador
+	estadisticasJugadorReq := EstadisticaJugadorRequest{
+		Goles:            &estadistica.Goles,
+		Asistencias:      &estadistica.Asistencias,
+		PasesCompletados: estadistica.PasesCompletados,
+		DuelosGanados:    estadistica.DuelosGanados,
+	}
+	err = validarEstadisticasJugador(estadisticasJugadorReq)
+	if err != nil {
+		// Si hay error en la validación de las estadisticas, lanzo código 400 y termino la ejecución del handler
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Inserto en la tabla EstadisticaJugador la estadistica actualizada de jugador
+	nuevaEstadistica, err := queries.UpdateEstadisticaJugador(ctx, estadistica)
+	if err != nil {
+		// Si ocurre un error al insertar las nuevas estadisticas, lanzo código 500 y finalizo la ejecucion del handler
+		http.Error(w, "Error actualizando estadisticas de jugador", http.StatusInternalServerError)
+		return
+	}
+
+	// Establezco el header de respuesta de tipo JSON, lanzo el código 201 y respondo con las estadisticas de jugador como JSON
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(nuevaEstadistica)
+	if err != nil {
+		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
+		http.Error(w, "Error codificando a JSON las estadisticas de jugador actualizadas", http.StatusInternalServerError)
+		return
+	}
+}
+
+// Funcion para el handler DELETE EstadisticasJugador
+func eliminarEstadisticaJugador(w http.ResponseWriter, r *http.Request, id_usuario int32, id_partido int32) {
+	// Crea el contexto necesario para las operaciones sqlc
+	ctx := r.Context()
+
+	// Creo el objeto para eliminar la estadistica de jugador
+	datosEstadisticaJugador := db.DeleteEstadisticaJugadorParams{
+		IDUsuario: id_usuario,
+		IDPartido: id_partido,
+	}
+
+	// Elimino de la tabla EstadisticaArquero la estadistica
+	err := queries.DeleteEstadisticaJugador(ctx, datosEstadisticaJugador)
+	if err != nil {
+		// Si ocurre un error al eliminar la estadistica, lanzo código 500 y finalizo la ejecucion del handler
+		http.Error(w, "Error eliminando estadistica de jugador", http.StatusInternalServerError)
+		return
+	}
+
+	// Lanzo el código 204 como respuesta exitosa de la operación
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// Funciones para handlers de EstadisticasArquero *(*solo para pruebas*)*
+// Funcion para el handler POST EstadisticaArquero
+func crearEstadisticasArquero(w http.ResponseWriter, r *http.Request) {
+	// Crea el contexto necesario para las operaciones sqlc
+	ctx := r.Context()
+
+	// Decodificar el JSON de la request
+	var estadistica db.InsertEstadisticaArqueroParams
+	err := json.NewDecoder(r.Body).Decode(&estadistica)
+	if err != nil {
+		// Si ocurre un error al decodificar el JSON, lanzo un código 400 y finalizo la ejecucion del handler
+		http.Error(w, "Los datos envíados son inválidos", http.StatusBadRequest)
+		return
+	}
+
+	// Valido los datos del JSON de las estadisticas, en este caso de jugador
+	estadisticasArqueroReq := EstadisticaCrearArqueroRequest{
+		IDUsuario:         &estadistica.IDUsuario,
+		IDPartido:         &estadistica.IDPartido,
+		GolesRecibidos:    &estadistica.GolesRecibidos,
+		AtajadasClave:     &estadistica.AtajadasClave,
+		SaquesCompletados: estadistica.SaquesCompletados,
+	}
+	err = validarCrearEstadisticasArquero(estadisticasArqueroReq)
+	if err != nil {
+		// Si hay error en la validación de las estadisticas, lanzo código 400 y termino la ejecución del handler
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Inserto en la tabla EstadisticaArquero la nueva estadistica de arquero
+	nuevaEstadistica, err := queries.InsertEstadisticaArquero(ctx, estadistica)
+	if err != nil {
+		// Si ocurre un error al insertar las nuevas estadisticas, lanzo código 500 y finalizo la ejecucion del handler
+		http.Error(w, "Error creando estadisticas de arquero", http.StatusInternalServerError)
+		return
+	}
+
+	// Establezco el header de respuesta de tipo JSON, lanzo el código 201 y respondo con las estadisticas de arquero como JSON
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(nuevaEstadistica)
+	if err != nil {
+		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
+		http.Error(w, "Error codificando a JSON las estadisticas de arquero creadas", http.StatusInternalServerError)
+		return
+	}
+}
+
+// Funcion para el handler GET EstadisticaJugador para un partido y usuario dado
+func obtenerEstadisticasArquero(w http.ResponseWriter, r *http.Request, id_usuario int32, id_partido int32) {
+	// Crea el contexto necesario para las operaciones sqlc
+	ctx := r.Context()
+
+	// Crea el tipo auxiliar necesario para la operación sqlc
+	informacionEstadistica := db.GetEstadisticaArqueroParams{
+		IDUsuario: id_usuario,
+		IDPartido: id_partido,
+	}
+
+	// Obtengo una estadistica para un partido y un usuario dado
+	estadistica, err := queries.GetEstadisticaArquero(ctx, informacionEstadistica)
+	if err != nil {
+		// Si ocurre un error obteniendo la estadistica para un partido y usuario dado, lanzo código 404 y finalizo la ejecucion del handler
+		http.Error(w, fmt.Sprintf("Error obteniendo la estadistica para el partido %d y el usuario %d", id_partido, id_usuario), http.StatusNotFound)
+		return
+	}
+
+	// Establezco el header de respuesta de tipo JSON, lanzo código 200 y respondo con los partidos listados para el usuario en formato JSON
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(estadistica)
+	if err != nil {
+		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
+		http.Error(w, "Error codificando a JSON la estadistica obtenida", http.StatusInternalServerError)
+		return
+	}
+}
+
+// Funcion para el handler PUT EstadisticaJugador
+func actualizarEstadisticasArquero(w http.ResponseWriter, r *http.Request) {
+	// Crea el contexto necesario para las operaciones sqlc
+	ctx := r.Context()
+
+	// Decodificar el JSON de la request
+	var estadistica db.UpdateEstadisticaArqueroParams
+	err := json.NewDecoder(r.Body).Decode(&estadistica)
+	if err != nil {
+		// Si ocurre un error al decodificar el JSON, lanzo un código 400 y finalizo la ejecucion del handler
+		http.Error(w, "Los datos envíados son inválidos", http.StatusBadRequest)
+		return
+	}
+
+	// Valido los datos del JSON de las estadisticas de jugador
+	estadisticasArqueroReq := EstadisticaArqueroRequest{
+		GolesRecibidos:    &estadistica.GolesRecibidos,
+		AtajadasClave:     &estadistica.AtajadasClave,
+		SaquesCompletados: estadistica.SaquesCompletados,
+	}
+	err = validarEstadisticasArquero(estadisticasArqueroReq)
+	if err != nil {
+		// Si hay error en la validación de las estadisticas, lanzo código 400 y termino la ejecución del handler
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Inserto en la tabla EstadisticaJugador la estadistica actualizada de jugador
+	nuevaEstadistica, err := queries.UpdateEstadisticaArquero(ctx, estadistica)
+	if err != nil {
+		// Si ocurre un error al insertar las nuevas estadisticas, lanzo código 500 y finalizo la ejecucion del handler
+		http.Error(w, "Error actualizando estadisticas de arquero", http.StatusInternalServerError)
+		return
+	}
+
+	// Establezco el header de respuesta de tipo JSON, lanzo el código 201 y respondo con las estadisticas de jugador como JSON
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(nuevaEstadistica)
+	if err != nil {
+		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
+		http.Error(w, "Error codificando a JSON las estadisticas de arquero actualizadas", http.StatusInternalServerError)
+		return
+	}
+}
+
+// Funcion para el handler DELETE EstadisticasArquero
+func eliminarEstadisticasArquero(w http.ResponseWriter, r *http.Request, id_usuario int32, id_partido int32) {
+	// Crea el contexto necesario para las operaciones sqlc
+	ctx := r.Context()
+
+	// Creo el objeto para eliminar la estadistica de arquero
+	datosEstadisticaArquero := db.DeleteEstadisticaArqueroParams{
+		IDUsuario: id_usuario,
+		IDPartido: id_partido,
+	}
+
+	// Elimino de la tabla EstadisticaArquero la estadistica
+	err := queries.DeleteEstadisticaArquero(ctx, datosEstadisticaArquero)
+	if err != nil {
+		// Si ocurre un error al eliminar la estadistica, lanzo código 500 y finalizo la ejecucion del handler
+		http.Error(w, "Error eliminando estadistica de arquero", http.StatusInternalServerError)
+		return
+	}
+
+	// Lanzo el código 204 como respuesta exitosa de la operación
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// Funcion para el handler GET Estadisticas para un partido y usuario dado
+func obtenerEstadisticas(w http.ResponseWriter, r *http.Request, id_usuario int32, id_partido int32) {
+	// Crea el contexto necesario para las operaciones sqlc
+	ctx := r.Context()
+
+	// Crea el tipo auxiliar necesario para la operación sqlc
+	informacionEstadisticaJugador := db.GetEstadisticaJugadorParams{
+		IDUsuario: id_usuario,
+		IDPartido: id_partido,
+	}
+
+	// Crea el tipo auxiliar necesario para la operación sqlc
+	informacionEstadisticaArquero := db.GetEstadisticaArqueroParams{
+		IDUsuario: id_usuario,
+		IDPartido: id_partido,
+	}
+
+	// Obtengo una estadistica de jugador para un partido y un usuario dado, y la guardo en una variable que es puntero a la misma para poder preguntar por nil
+	estadisticaJugador, err := queries.GetEstadisticaJugador(ctx, informacionEstadisticaJugador)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// Error debido a que no encontró una estadística de jugador, continua el flujo para ver si encuentra estadistica de arquero
+			fmt.Printf("No hay estadística de jugador para partido %d y usuario %d\n", id_partido, id_usuario)
+		} else {
+			// Otro tipo de error al obtener la estadistica, lanzo código 500 y termino la ejecución
+			http.Error(w, "Error interno al obtener estadística del jugador", http.StatusInternalServerError)
+			return
+		}
+	}
+	estadisticaJugadorPTR := &estadisticaJugador
+
+	// Obtengo una estadistica para un partido y un usuario dado, y la guardo en una variable que es puntero a la misma para poder preguntar por nil
+	estadisticaArquero, err := queries.GetEstadisticaArquero(ctx, informacionEstadisticaArquero)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// Error debido a que no encontró una estadística de arquero, continua el flujo para ver si encuentra estadistica de arquero
+			fmt.Printf("No hay estadística de arquero para partido %d y usuario %d\n", id_partido, id_usuario)
+		} else {
+			// Otro tipo de error al obtener la estadistica, lanzo código 500 y termino la ejecución
+			http.Error(w, "Error interno al obtener estadística del arquero", http.StatusInternalServerError)
+			return
+		}
+	}
+	estadisticaArqueroPTR := &estadisticaArquero
+
+	// Creo la variable que retornare en caso de que exista la estadistica
+	estadistica := RetornoEstadistica{}
+
+	// Consulto si existe la estadistica de algún tipo o si no existe ninguna (en este caso, lanzo código 404 y corto la ejecución)
+	if estadisticaJugadorPTR == nil && estadisticaArqueroPTR == nil {
+		// No existe la estadistica buscada, de ninguno de los dos tipos
+		// Si ocurre un error obteniendo la estadistica para un partido y usuario dado, lanzo código 404 y finalizo la ejecucion del handler
+		http.Error(w, fmt.Sprintf("Error no existen estadisticas de ningun tipo para el partido %d y el usuario %d", id_partido, id_usuario), http.StatusNotFound)
+		return
+
+	} else if estadisticaJugadorPTR == nil {
+		// Existe estadistica de arquero
+		estadistica.TipoEstadistica = "arquero"
+		estadistica.EstadisticaJugador = estadisticaJugadorPTR
+		estadistica.EstadisticaArquero = estadisticaArqueroPTR
+
+	} else if estadisticaArqueroPTR == nil {
+		// Existe estadistica de jugador
+		estadistica.TipoEstadistica = "arquero"
+		estadistica.EstadisticaJugador = estadisticaJugadorPTR
+		estadistica.EstadisticaArquero = estadisticaArqueroPTR
+
+	}
+
+	// Establezco el header de respuesta de tipo JSON, lanzo código 200 y respondo con la estadistica encontrada en formato JSON
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(estadistica)
+	if err != nil {
+		// Si ocurre un error al codificar el JSON, lanzo un código 500 y finalizo la ejecucion del handler
+		http.Error(w, "Error codificando a JSON la estadistica obtenida", http.StatusInternalServerError)
+		return
+	}
+}
 
 // Funciones auxiliares de validación
 func validarCreacionPartido(partido PartidoCrearRequest) error {
@@ -647,20 +1025,73 @@ func validarActualizarPartido(partido PartidoActualizacionRequest) error {
 	return nil
 }
 
-func validarEstadisticasJugador(estadisticas EstadisticaJugadorRequest) error {
+func validarCrearEstadisticasJugador(estadisticas EstadisticaCrearJugadorRequest) error {
+	if estadisticas.IDUsuario == nil || *estadisticas.IDUsuario <= 0 {
+		return errors.New("La estadistica no tiene el dato obligatorio: IDUsuario")
+	}
+	if estadisticas.IDPartido == nil || *estadisticas.IDPartido <= 0 {
+		return errors.New("La estadistica no tiene el dato obligatorio: IDPartido")
+	}
 	if estadisticas.Goles == nil || *estadisticas.Goles < 0 {
-		return errors.New("El partido no tiene el dato obligatorio: Goles")
+		return errors.New("La estadistica no tiene el dato obligatorio: Goles")
 	}
 	if estadisticas.Asistencias == nil || *estadisticas.Asistencias < 0 {
-		return errors.New("El partido no tiene el dato obligatorio: Asistencias")
+		return errors.New("La estadistica tiene el dato obligatorio: Asistencias")
 	}
 	if estadisticas.PasesCompletados.Valid {
 		// Controlo solo para los valores No Nulo
-		return validarFormatoPorcentaje(estadisticas.PasesCompletados, "pases completados")
+		//Valido el formato y valor
+		return validarFormatoPorcentaje(&estadisticas.PasesCompletados, "pases completados")
 	}
 	if estadisticas.DuelosGanados.Valid {
 		// Controlo solo para los valores No Nulo
-		return validarFormatoPorcentaje(estadisticas.DuelosGanados, "duelos ganados")
+		//Valido el formato y valor
+		return validarFormatoPorcentaje(&estadisticas.DuelosGanados, "duelos ganados")
+	}
+
+	// Si pasa la validación
+	return nil
+}
+
+func validarCrearEstadisticasArquero(estadisticas EstadisticaCrearArqueroRequest) error {
+	if estadisticas.IDUsuario == nil || *estadisticas.IDUsuario <= 0 {
+		return errors.New("La estadistica no tiene el dato obligatorio: IDUsuario")
+	}
+	if estadisticas.IDPartido == nil || *estadisticas.IDPartido <= 0 {
+		return errors.New("La estadistica no tiene el dato obligatorio: IDPartido")
+	}
+	if estadisticas.GolesRecibidos == nil || *estadisticas.GolesRecibidos < 0 {
+		return errors.New("La estadistica no tiene el dato obligatorio: Goles Recibidos")
+	}
+	if estadisticas.AtajadasClave == nil || *estadisticas.AtajadasClave < 0 {
+		return errors.New("La estadistica no tiene el dato obligatorio: Atajadas Clave")
+	}
+	if estadisticas.SaquesCompletados.Valid {
+		// Controlo solo para los valores No Nulos
+		//Valido el formato y valor
+		return validarFormatoPorcentaje(&estadisticas.SaquesCompletados, "saques completados")
+	}
+
+	// Si pasa la validación
+	return nil
+}
+
+func validarEstadisticasJugador(estadisticas EstadisticaJugadorRequest) error {
+	if estadisticas.Goles == nil || *estadisticas.Goles < 0 {
+		return errors.New("La estadistica no tiene el dato obligatorio: Goles")
+	}
+	if estadisticas.Asistencias == nil || *estadisticas.Asistencias < 0 {
+		return errors.New("La estadistica no tiene el dato obligatorio: Asistencias")
+	}
+	if estadisticas.PasesCompletados.Valid {
+		// Controlo solo para los valores No Nulo
+		//Valido el formato y valor
+		return validarFormatoPorcentaje(&estadisticas.PasesCompletados, "pases completados")
+	}
+	if estadisticas.DuelosGanados.Valid {
+		// Controlo solo para los valores No Nulo
+		//Valido el formato y valor
+		return validarFormatoPorcentaje(&estadisticas.DuelosGanados, "duelos ganados")
 	}
 
 	// Si pasa la validación
@@ -669,47 +1100,57 @@ func validarEstadisticasJugador(estadisticas EstadisticaJugadorRequest) error {
 
 func validarEstadisticasArquero(estadisticas EstadisticaArqueroRequest) error {
 	if estadisticas.GolesRecibidos == nil || *estadisticas.GolesRecibidos < 0 {
-		return errors.New("El partido no tiene el dato obligatorio: Goles Recibidos")
+		return errors.New("La estadistica no tiene el dato obligatorio: Goles Recibidos")
 	}
 	if estadisticas.AtajadasClave == nil || *estadisticas.AtajadasClave < 0 {
-		return errors.New("El partido no tiene el dato obligatorio: Atajadas Clave")
+		return errors.New("La estadistica no tiene el dato obligatorio: Atajadas Clave")
 	}
 	if estadisticas.SaquesCompletados.Valid {
-		// Controlo solo para los valores No Nulo
-		return validarFormatoPorcentaje(estadisticas.SaquesCompletados, "saques completados")
+		// Controlo solo para los valores No Nulos
+		//Valido el formato y valor
+		return validarFormatoPorcentaje(&estadisticas.SaquesCompletados, "saques completados")
 	}
 
 	// Si pasa la validación
 	return nil
 }
 
-func validarFormatoPorcentaje(dato sql.NullString, atributo string) error {
-
+func validarFormatoPorcentaje(dato *sql.NullString, atributo string) error {
 	// Reemplazo la coma por el punto, en caso de que el formato no fuera el adecuado
-	s := strings.ReplaceAll(dato.String, ",", ".")
+	dato.String = strings.ReplaceAll(dato.String, ",", ".")
 
-	// Parseo el string como float
-	val, err := strconv.ParseFloat(s, 64)
-	if err != nil {
-		// Si ocurre un error en el parseo
-		return fmt.Errorf("El dato %s es inválido, debe ser un porcentaje entre 0.00 y 1.00 (hasta dos decimales)", atributo)
+	// Creo variable local que uso para validar
+	s := dato.String
+
+	if s == "" {
+		//Si el dato tiene un valor vacío
+		return fmt.Errorf("El dato %s es vacío, debe ser un porcentaje entre 0.00 y 1.00 (hasta dos decimales)", atributo)
+	} else {
+		// Si el dato tiene un valor no vacío
+
+		// Parseo el string como float
+		val, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			// Si ocurre un error en el parseo
+			return fmt.Errorf("El dato %s es inválido, debe ser un porcentaje entre 0.00 y 1.00 (hasta dos decimales)", atributo)
+		}
+
+		// Valido el valor para que este dentro del rango de valores
+		if val < 0.00 || val > 1.00 {
+			// Si el valor es inválido
+			return fmt.Errorf("El dato %s es inválido, debe ser un porcentaje entre 0.00 y 1.00 (hasta dos decimales)", atributo)
+		}
+
+		// Valido el formato de float que permite la BD (decimal(3,2))
+		parts := strings.Split(s, ".")
+		if len(parts) == 2 && len(parts[1]) > 2 {
+			// Si existe el punto y por ende, la parte decimal (primer condición), y tiene mas de dos decimales (segunda condición)
+			return fmt.Errorf("El dato %s es inválido, debe ser un porcentaje entre 0.00 y 1.00 (hasta dos decimales)", atributo)
+		}
+
+		// Si pasa la validación
+		return nil
 	}
-
-	// Valido el valor para que este dentro del rango de valores
-	if val < 0.00 || val > 1.00 {
-		// Si el valor es inválido
-		return fmt.Errorf("El dato %s es inválido, debe ser un porcentaje entre 0.00 y 1.00 (hasta dos decimales)", atributo)
-	}
-
-	// Valido el formato de float que permite la BD (decimal(3,2))
-	parts := strings.Split(s, ".")
-	if len(parts) == 2 && len(parts[1]) > 2 {
-		// Si existe el punto y por ende, la parte decimal (primer condición), y tiene mas de dos decimales (segunda condición)
-		return fmt.Errorf("El dato %s es inválido, debe ser un porcentaje entre 0.00 y 1.00 (hasta dos decimales)", atributo)
-	}
-
-	// Si pasa la validación
-	return nil
 }
 
 func validarCreacionUsuario(usuario db.CreateUserParams) error {
@@ -858,23 +1299,71 @@ func funcionConversionIdUsuario(w http.ResponseWriter, r *http.Request, funcion 
 }
 
 func EstadisticasJugadorHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "POST":
-		//aca deberia estar la funcion que crea una estadistica de jugador
-	case "UPDATE":
-		//aca deberia estar la funcion que actualiza la estadistica de jugador
-	default:
-		w.WriteHeader(http.StatusMethodNotAllowed)
+	pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	// Caso: /estadistica-jugador/id_usuario/id_partido
+	if len(pathParts) == 3 && pathParts[0] == "estadistica-jugador" {
+		id_usuario, err := strconv.Atoi(pathParts[1])
+		if err != nil {
+			http.Error(w, "ID inválido", http.StatusBadRequest)
+			return
+		}
+		id_partido, err := strconv.Atoi(pathParts[2])
+		switch r.Method {
+		case "GET":
+			obtenerEstadisticasJugador(w, r, int32(id_usuario), int32(id_partido))
+		case "DELETE":
+			eliminarEstadisticaJugador(w, r, int32(id_usuario), int32(id_partido))
+		default:
+			http.Error(w, "Método no permitido para esta ruta", http.StatusMethodNotAllowed)
+		}
+		return
+	}
+	// Caso: /usuarios (sin ID)
+	if len(pathParts) == 1 && pathParts[0] == "partidos" {
+		switch r.Method {
+		case "POST":
+			crearEstadisticasJugador(w, r)
+		case "PUT":
+			actualizarEstadisticasJugador(w, r)
+		default:
+			http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
+		}
+		return
 	}
 }
 
 func EstadisticasArqueroHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "POST":
-		//aca deberia estar la funcion que crea una estadistica de jugador
-	case "UPDATE":
-		//aca deberia estar la funcion que actualiza la estadistica de jugador
-	default:
-		w.WriteHeader(http.StatusMethodNotAllowed)
+	pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	// Caso: /estadistica-jugador/id_usuario/id_partido
+	if len(pathParts) == 3 && pathParts[0] == "estadistica-arquero" {
+		id_usuario, err := strconv.Atoi(pathParts[1])
+		if err != nil {
+			http.Error(w, "ID inválido", http.StatusBadRequest)
+			return
+		}
+		id_partido, err := strconv.Atoi(pathParts[2])
+		switch r.Method {
+		case "GET":
+			obtenerEstadisticasArquero(w, r, int32(id_usuario), int32(id_partido))
+		case "DELETE":
+			eliminarEstadisticasArquero(w, r, int32(id_usuario), int32(id_partido))
+		default:
+			http.Error(w, "Método no permitido para esta ruta", http.StatusMethodNotAllowed)
+		}
+		return
+	}
+	// Caso: /usuarios (sin ID)
+	if len(pathParts) == 1 && pathParts[0] == "partidos" {
+		switch r.Method {
+		case "POST":
+			crearEstadisticasArquero(w,r)
+		case "PUT":
+			actualizarEstadisticasArquero(w, r)
+		default:
+			http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
+		}
+		return
 	}
 }
+
+/estadistica-jugador/id_usuario/id_partido --> buscas la estadistica usuario

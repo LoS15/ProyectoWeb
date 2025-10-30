@@ -1,90 +1,203 @@
-const selectorJugador = document.getElementById('tipo_jugador')
-const selectorArquero = document.getElementById('tipo_arquero')
-const formularioJugador = document.getElementById('estadisticas-jugador-campo')
-const formularioArquero = document.getElementById('estadisticas-arquero')
+document.addEventListener('DOMContentLoaded', () => { //CREO UN EVENT LISTENER PARA CARGAR LOS PARTIDOS APENAS SE ABRE LA PAGINA
+    let flagPartidosCargadosInicialmente = false;
 
-selectorJugador.addEventListener('change', (event) => {
-    if (selectorJugador.checked){
-        formularioJugador.style.display = 'block'
-        formularioArquero.style.display = 'none'
-    }
-})
+    /*SECCION DE NAVEGACION*/
 
-selectorArquero.addEventListener('change', (event) => {
-    if (selectorArquero.checked){
-        formularioJugador.style.display = 'none'
-        formularioArquero.style.display = 'block'
-    }
-})
+    //secciones
+    const seccionUsuario = document.getElementById('container-formulario-usuario');
+    const seccionPartidos = document.getElementById('container-seccion-partidos');
 
-const formularioPartido = document.getElementById('formulario-partido')
-const feedbackFormulario = document.getElementById('feedback-formulario')
+    //botones de navegacion del header
+    const botonUsuario = document.getElementById('boton-usuario');
+    const botonPartidos = document.getElementById('boton-partidos');
 
-formularioPartido.addEventListener('submit', async(event) => {
-    event.preventDefault();  // previene que se envie por default
-    feedbackFormulario.textContent = 'Enviando formulario...';
-    //creo un objeto plano para rellenar con los campos pertinentes
-    const data = Object.fromEntries(formularioPartido.entries());
-    //construyo el json inicial, sin tener aun estadisticas de jugador o arquero
-    const json_partido = {
-        id_usuario: parseInt(data.id_usuario),
-        fecha: data.fecha + "T00:00:00Z",
-        cancha: data.cancha,
-        tipo_estadistica: data.tipo_estadistica,
-        puntuacion : data.puntuacion,
-        estadistica_jugador: null,
-        estadistica_arquero: null,
-    }
-    //ahora lleno el objeto con lo que corresponde
-    if (json_partido.tipo_estadistica === 'jugador') {
-        json_partido.estadistica_jugador = {
-            goles:parseInt(data.goles),
-            asistencias:parseInt(data.asistencias),
-            pases_completados:data.pases_completados,
-            duelos_ganados:data.duelos_ganados
-        }
-    } else {
-        json_partido.estadistica_arquero = {
-            goles_recibidos: parseInt(data.goles_recibidos),
-            atajadas_clave: parseInt(data.atajadas_clave),
-            saques_completados: data.saques_completados
-        }
-    }
-    //ahora envio el JSON con fetch
-    try {
-        const response = await fetch('/crearPartido', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json', //declaramos que lo enviado es un JSON
-            },
-            body: JSON.stringify(json_partido) //convertimos el string que teniamos antes en el JSON a enviar
-        });
-        if (response.ok) {
-            const result = await response.text();
-            feedbackFormulario.textContent = 'El formulario ha sido enviado.';
-            feedbackFormulario.style.color = 'green';
-            formularioPartido.reset();
-            cargarPartidos()
+    //escucha de eventos sobre botones de navegacion del header
+    botonUsuario.addEventListener('click', (e) => {
+        mostrarVista('seccion-usuario');
+    })
+    botonPartidos.addEventListener('click', (e) => {
+        mostrarVista('seccion-partidos');
+    })
+
+    //funcion de vistas
+    function mostrarVista(vistaDada){
+        if (vistaDada === 'seccion-partidos'){
+            seccionPartidos.style.display = 'block';
+            seccionUsuario.style.display = 'none';
+            if(!flagPartidosCargadosInicialmente){
+                flagPartidosCargadosInicialmente = true;
+                cargarPartidos();
+            }
         } else {
-            const error = await response.text();
-            feedbackFormulario.textContent = `Error de red: ${error}.`;
-            feedbackFormulario.style.color = 'red';
+            seccionUsuario.style.display = 'block';
+            seccionPartidos.style.display = 'none';
         }
-    } catch (error) {
-        feedbackFormulario.textContent = `Error de red: ${error.message}.`;
-        feedbackFormulario.style.color = 'red';
     }
-})
 
-//
-document.addEventListener('DOMContentLoaded', () => {
-    cargarPartidos();
+    /*SECCION USUARIO*/
+
+    //formulario de usuario (secciones)
+    const formularioUsuario = document.getElementById('formulario-usuario');
+    const feedbackFormularioUsuario = document.getElementById('feedback-formulario-usuario');
+
+    //evento sobre submit de creacion de usuario
+    formularioUsuario.addEventListener('submit', async(event) => {
+        event.preventDefault();  // previene que se envie por default
+        feedbackFormularioUsuario.textContent = 'Enviando formulario...';
+        //obtengo la info de las entries del formulario, para armar el JSON de la request
+        const data = Object.fromEntries(new FormData(formularioUsuario));
+        //armo el JSON
+        const jsonUsuario = {
+            "nombre": data.nombre,
+            "apellido": data.apellido,
+            "pais": data.pais,
+        }
+        try {
+            const response = await fetch('/usuarios', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json', //declaramos que lo enviado es un JSON
+                },
+                body: JSON.stringify(jsonUsuario) //convertimos el string que teniamos antes en el JSON a enviar
+            });
+            if (!response.ok) {
+                const error = response.statusText;
+                feedbackFormularioUsuario.textContent = `Ha ocurrido un error al intentar registrar el usuario. Error: ${error}`;
+                feedbackFormularioUsuario.style.color = 'red';
+            } else {
+                feedbackFormularioUsuario.textContent = 'El formulario ha sido enviado correctamente.';
+                feedbackFormularioUsuario.style.color = 'green';
+            }
+        } catch (error) {
+            feedbackFormularioUsuario.textContent = `Error de red: ${error.message}.`;
+            feedbackFormularioUsuario.style.color = 'red';
+        }
+    })
+
+    /*SECCION DE PARTIDOS*/
+
+    //selectores de jugador o arquero, para el formulario de partido completo
+    const selectorJugador = document.getElementById('tipo_jugador')
+    const selectorArquero = document.getElementById('tipo_arquero')
+    const formularioJugador = document.getElementById('estadisticas-jugador-campo')
+    const formularioArquero = document.getElementById('estadisticas-arquero')
+
+    selectorJugador.addEventListener('change', (event) => {
+        if (selectorJugador.checked){
+            formularioJugador.style.display = 'block'
+            formularioArquero.style.display = 'none'
+        }
+    })
+
+    selectorArquero.addEventListener('change', (event) => {
+        if (selectorArquero.checked){
+            formularioJugador.style.display = 'none'
+            formularioArquero.style.display = 'block'
+        }
+    })
+
+    //formulario y evento de creacion de partido completo
+    const formularioPartido = document.getElementById('formulario-partido')
+    const feedbackFormularioPartido = document.getElementById('feedback-formulario-partido')
+
+    formularioPartido.addEventListener('submit', async(event) => { //FORMULARIO PARA ENVIAR PARTIDO_COMPLETO
+        event.preventDefault();  // previene que se envie por default
+        feedbackFormularioPartido.textContent = 'Enviando formulario...';
+        //obtengo la info de las entries del formulario, para armar el JSON de la request
+        const data = Object.fromEntries(new FormData(formularioPartido));//construyo el json inicial, sin tener aun estadisticas de jugador o arquero
+        const json_partido = {
+            id_usuario: parseInt(data.id_usuario),
+            fecha: data.fecha_partido + "T00:00:00Z",
+            cancha: data.cancha,
+            tipo_estadistica: data.tipo_estadistica,
+            puntuacion : parseInt(data.puntuacion),
+            estadistica_jugador: null,
+            estadistica_arquero: null,
+        }
+        //ahora lleno el objeto con lo que corresponde
+        if (json_partido.tipo_estadistica === 'jugador') {
+            json_partido.estadistica_jugador = {
+                goles:parseInt(data.goles),
+                asistencias:parseInt(data.asistencias),
+                pases_completados: parseFloat(data.pases_completados),
+                duelos_ganados: parseFloat(data.duelos_ganados)
+            }
+        } else {
+            json_partido.estadistica_arquero = {
+                goles_recibidos: parseInt(data.goles_recibidos),
+                atajadas_clave: parseInt(data.atajadas_clave),
+                saques_completados: parseFloat(data.saques_completados)
+            }
+        }
+        //ahora envio el JSON con fetch
+        try {
+            const response = await fetch('/crearPartido', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json', //declaramos que lo enviado es un JSON
+                },
+                body: JSON.stringify(json_partido) //convertimos el string que teniamos antes en el JSON a enviar
+            });
+            if (response.ok) {
+                feedbackFormularioPartido.textContent = 'El formulario ha sido enviado correctamente.';
+                feedbackFormularioPartido.style.color = 'green';
+                formularioPartido.reset(); //reseteo el formulario
+                cargarPartidos()
+            } else {
+                const error = await response.text();
+                feedbackFormularioPartido.textContent = `Error de red: ${error}.`;
+                feedbackFormularioPartido.style.color = 'red';
+            }
+        } catch (error) {
+            feedbackFormularioPartido.textContent = `Error de red: ${error.message}.`;
+            feedbackFormularioPartido.style.color = 'red';
+        }
+    })
+
+    //seccion de lista de partidos, y evento de listener sobre mostrar estadisticas, eliminar partidos, eliminar estadisticas o mostrar formularios para modificar estadisticas o partidos
+    const listaPartidos = document.getElementById('div-partidos');
+    listaPartidos.addEventListener('click', async(event)=> {
+        const target = event.target;
+        if(target.classList.contains('boton-estadisticas')){
+            mostrarEstadisticasDePartido(target);
+        } else if (target.classList.contains('boton-eliminar-partido')) {
+            eliminarPartido(target);
+        } else if (target.classList.contains('boton-modificar-estadistica')) {
+            mostrarFormularioModificacionEstadisticas(target);
+            //seguir maniana el evento de modificar estadistica. Tambien falta boton cancelar y boton modificar partido.
+        } else if (target.classList.contains('boton-modificar-partido')) { //ACCION SOBRE BOTON MODIFICAR PARTIDO
+            mostrarFormularioModificacionPartido(target);
+        } else if (target.classList.contains('boton-cancelar-mod')) {
+            const div_estadistica = target.closest('.div-estadisticas');
+            if (div_estadistica) { //si es estadistica, solo borro el contenido del div_estadistica, menos pesado
+                div_estadistica.innerText = '';
+                console.log("Cancelando modificacion sobre estadisticas de partido.")
+                return;
+            }
+            const elemento_partido = target.closest('.elemento-partido');
+            if (elemento_partido) {
+                console.log("Cancelando modificacion sobre partido. Refrescando lista de partidos...");
+                cargarPartidos();
+            }
+        }
+    });
+
+    //listener de modificaciones sobre estadisticas o partidos
+    listaPartidos.addEventListener('submit', async(event)=> { //listener solo sobre submit para formularios
+        event.preventDefault();
+        if (event.target.classList.contains('formulario-modificar-estadisticas')) { //ACCION SOBRE RECEPCION DE FORM DE MODIFICAR ESTADISTICAS
+            modificarEstadisticasPartido(event.target)
+        } else if (event.target.classList.contains('formulario-modificar-partido')) {
+            modificarPartido(event.target);
+        }
+    })
+
 })
 
 async function cargarPartidos() {
     const divLista = document.getElementById('div-partidos');
     try {
-        const response = await fetch('/partidos'); //GET para partidos
+        const response = await fetch('/partidos', {method:'GET'}); //GET para partidos
         if (!response.ok) {
             throw new Error(`Error HTTP! Status: ${response.status}`);
         }
@@ -100,7 +213,7 @@ async function cargarPartidos() {
             elementoPartido.className = 'elemento-partido';
             //creo elemento de informacion
             const infoPartido = document.createElement('p');
-            infoPartido.textContent = 'ID_Usuario' + partido.id_usuario + '.ID_Partido: ' + partido.id_partido + '. Fecha: ' + partido.fecha + '. Cancha: ' + partido.cancha + '. Puntuacion: ' + partido.puntuacion + '.';
+            infoPartido.textContent = `ID Usuario: ${partido.id_usuario}. ID Partido: ${partido.id_partido}. Fecha: ${partido.fecha}. Cancha: ${partido.cancha}. Puntuación: ${partido.puntuacion}.`;
             //creo boton de estadisticas
             const botonEstadisticas = document.createElement('button');
             botonEstadisticas.textContent = 'Ver estadisticas';
@@ -140,43 +253,6 @@ async function cargarPartidos() {
     }
 }
 
-const listaPartidos = document.getElementById('div-partidos');
-listaPartidos.addEventListener('click', async(event)=> {
-    const target = event.target;
-    if(target.classList.contains('boton-estadisticas')){
-        mostrarEstadisticasDePartido(target);
-    } else if (target.classList.contains('boton-eliminar-partido')) {
-        eliminarPartido(target);
-    } else if (target.classList.contains('boton-modificar-estadistica')) {
-        mostrarFormularioModificacionEstadisticas(target);
-        //seguir maniana el evento de modificar estadistica. Tambien falta boton cancelar y boton modificar partido.
-    } else if (target.classList.contains('boton-modificar-partido')) { //ACCION SOBRE BOTON MODIFICAR PARTIDO
-        mostrarFormularioModificacionPartido(target);
-    } else if (target.classList.contains('boton-cancelar-mod')) {
-        const div_estadistica = target.closest('.div-estadisticas');
-        if (div_estadistica) { //si es estadistica, solo borro el contenido del div_estadistica, menos pesado
-            div_estadistica.innerText = '';
-            console.log("Cancelando modificacion sobre estadisticas de partido.")
-            return;
-        }
-        const elemento_partido = target.closest('.elemento-partido');
-        if (elemento_partido) {
-            console.log("Cancelando modificacion sobre partido. Refrescando lista de partidos...");
-            cargarPartidos();
-        }
-    }
-});
-
-listaPartidos.addEventListener('submit', async(event)=> { //listener solo sobre submit para formularios
-    event.preventDefault();
-    if (event.target.classList.contains('formulario-modificar-estadisticas')) { //ACCION SOBRE RECEPCION DE FORM DE MODIFICAR ESTADISTICAS
-        modificarEstadisticasPartido(event.target)
-    } else if (event.target.classList.contains('formulario-modificar-partido')) {
-        modificarPartido(event.target);
-    }
-})
-
-
 async function mostrarEstadisticasDePartido(boton){
     const partidoId = boton.dataset.idPartido;
     const usuarioId = boton.dataset.idUsuario;
@@ -184,7 +260,7 @@ async function mostrarEstadisticasDePartido(boton){
     const divEstadistica = boton.parentElement.querySelector('.div-estadisticas');
     if (!divEstadistica) return; // esto tengo q fijarme
     try {
-        const response = await fetch(`/estadisticas?id_usuario=${usuarioId}&id_partido=${partidoId}`, {
+        const response = await fetch(`/estadisticas/${usuarioId}/${partidoId}`, {
                 method: 'GET'
             }
         );
@@ -194,22 +270,22 @@ async function mostrarEstadisticasDePartido(boton){
         const estadisticas = await response.json();
         divEstadistica.innerHTML = ''; //limpio el html (lo inicio mas bien)
         const informacionEstadistica = document.createElement('div'); //debo hacer esta division para agregar el boton luego y este div como hijos
-        if (estadisticas.tipo === 'jugador'){ //son estadisticas de jugador
-            informacionEstadistica.innerHTML = ` <strong>Estadisticas Jugador</strong>' +
-                '<p>Goles: ${estadisticas.goles}</p>' +
-                '<p>Asistencias: ${estadisticas.asistencias}</p>'+
-                '<p>Pases completados: ${estadisticas.pases_completados}</p>'+
-                '<p>Duelos ganados: ${estadisticas.duelos_ganados}</p>`;
+        if (estadisticas.tipo_estadistica === 'jugador'){ //son estadisticas de jugador
+            informacionEstadistica.innerHTML = ` <strong>Estadisticas Jugador</strong>
+                <p>Goles: ${estadisticas.estadistica_jugador.goles}</p> 
+                <p>Asistencias: ${estadisticas.estadistica_jugador.asistencias}</p>
+                <p>Pases completados: ${estadisticas.estadistica_jugador.pases_completados}</p>
+                <p>Duelos ganados: ${estadisticas.estadistica_jugador.duelos_ganados}</p>`;
         } else {
-            informacionEstadistica.innerHTML = ` <strong>Estadisticas Jugador</strong>' +
-                '<p>Goles recibidos: ${estadisticas.goles_recibidos}</p>' +
-                '<p>Atajadas clave: ${estadisticas.atajadas_clave}</p>'+
-                '<p>Saques completados: ${estadisticas.saques_completados}</p>`;
+            informacionEstadistica.innerHTML = `<strong>Estadisticas Arquero</strong>
+                <p>Goles recibidos: ${estadisticas.estadistica_arquero.goles_recibidos}</p>
+                <p>Atajadas clave: ${estadisticas.estadistica_arquero.atajadas_clave}</p>
+                <p>Saques completados: ${estadisticas.estadistica_arquero.saques_completados}</p>`;
         }
         const botonModificarEstadistica = document.createElement('button');
         botonModificarEstadistica.textContent = 'Modificar estadistica';
         botonModificarEstadistica.className = 'boton-modificar-estadistica';
-        botonModificarEstadistica.dataset.json = JSON.stringify(estadisticas.data);
+        botonModificarEstadistica.dataset.json = JSON.stringify(estadisticas);
         divEstadistica.appendChild(informacionEstadistica);
         divEstadistica.appendChild(botonModificarEstadistica);
     } catch (error) {
@@ -224,7 +300,7 @@ async function eliminarPartido(boton){
         return;
     }
     try {
-        const response = await fetch(`/partidos?id_usuario=${usuarioId}&id_partido=${partidoId}`, {
+        const response = await fetch(`/partidos/${usuarioId}/${partidoId}`, {
             method: 'DELETE'
         });
         if (!response.ok) {
@@ -240,7 +316,7 @@ async function eliminarPartido(boton){
 
 async function mostrarFormularioModificacionEstadisticas(boton){
     const estadisticas = JSON.parse(boton.dataset.json);
-    const tipoEstadistica = estadisticas.tipo;
+    const tipoEstadistica = estadisticas.tipo_estadistica;
     const divEstadistica = boton.closest('.div-estadisticas'); //obtiene ancestro mas cercano de tipo div-estadisticas
     // crear formulario aqui (a traves de template definidos)
     let template;
@@ -255,14 +331,14 @@ async function mostrarFormularioModificacionEstadisticas(boton){
     templateDom.querySelector('[name="id_usuario"]').value = estadisticas.id_usuario;
     templateDom.querySelector('[name="id_partido"]').value = estadisticas.id_partido;
     if (tipoEstadistica === 'jugador'){
-        templateDom.querySelector('[name="goles"]').value = estadisticas.goles;
-        templateDom.querySelector('[name="asistencias"]').value = estadisticas.asistencias;
-        templateDom.querySelector('[name="pases-completados"]').value = estadisticas.pases_completados;
-        templateDom.querySelector('[name="duelos-ganados"]').value = estadisticas.duelos_ganados;
+        templateDom.querySelector('[name="goles"]').value = estadisticas.estadistica_jugador.goles;
+        templateDom.querySelector('[name="asistencias"]').value = estadisticas.estadistica_jugador.asistencias;
+        templateDom.querySelector('[name="pases_completados"]').value = estadisticas.estadistica_jugador.pases_completados;
+        templateDom.querySelector('[name="duelos_ganados"]').value = estadisticas.estadistica_jugador.duelos_ganados;
     } else {
-        templateDom.querySelector('[name="goles-recibidos"]').value = estadisticas.goles_recibidos;
-        templateDom.querySelector('[name="atajadas-clave"]').value = estadisticas.atajadas_clave;
-        templateDom.querySelector('[name="saques-completados"]').value = estadisticas.saques_completados;
+        templateDom.querySelector('[name="goles_recibidos"]').value = estadisticas.estadistica_arquero.goles_recibidos;
+        templateDom.querySelector('[name="atajadas_clave"]').value = estadisticas.estadistica_arquero.atajadas_clave;
+        templateDom.querySelector('[name="saques_completados"]').value = estadisticas.estadistica_arquero.saques_completados;
     }
     //ahora asigno el formulario al innerHTML,
     divEstadistica.innerHTML = '';
@@ -284,8 +360,8 @@ async function modificarEstadisticasPartido(formulario){
             id_partido: parseInt(data.id_partido),
             goles: parseInt(data.goles),
             asistencias: parseInt(data.asistencias),
-            pases_completados: data.pases_completados,
-            duelos_ganados: data.duelos_ganados
+            pases_completados: parseFloat(data.pases_completados),
+            duelos_ganados: parseFloat(data.duelos_ganados)
         }
     } else {
         jsonEstadistica = {
@@ -293,7 +369,7 @@ async function modificarEstadisticasPartido(formulario){
             id_partido: parseInt(data.id_partido),
             goles_recibidos: parseInt(data.goles_recibidos),
             atajadas_clave: parseInt(data.atajadas_clave),
-            saques_completados: data.saques_completados,
+            saques_completados: parseFloat(data.saques_completados),
         }
     }
     //ahora que el JSON esta listo, llamo a la funcion para enviar a guardar los cambios

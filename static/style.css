@@ -1,36 +1,83 @@
-body {
-    background: #f4f6f8;
-    font-family: 'Segoe UI', Arial, sans-serif;
-    color: #222;
+/* ----- Layout general ----- */
+html, body {
+    height: 100%;
     margin: 0;
-    padding: 0;
+    font-family: Arial, sans-serif;
 }
 
-h1 {
-    color: #1976d2;
+/* Grid principal */
+body {
+    display: grid;
+    grid-template-rows: auto 1fr auto;  /* defino el grid rows para que sea uno solo x row */
+    grid-template-areas:
+        "header"
+        "content"
+        "footer";
+    height: 100vh;
+}
+
+/* Header */
+header {
+    grid-area: header;
+    background-color: #f2f2f2;
+    padding: 1rem;
+    border-bottom: 1px solid #ccc;
     text-align: center;
-    margin-top: 2rem;
-    font-size: 2.5rem;
-    letter-spacing: 1px;
 }
 
-p {
-    max-width: 600px;
-    margin: 2rem auto;
-    font-size: 1.2rem;
+header button {
+    margin: 0.5rem;
+    padding: 0.5rem 1rem;
+}
+
+/* defino a todos los tipo section como grid-area content */
+section {
+    grid-area: content;
+    padding: 1rem;
+}
+
+/* footer */
+footer {
+    grid-area: footer;
+    background-color: #f2f2f2;
+    border-top: 1px solid #ccc;
+    text-align: center;
+    padding: 0.5rem;
+}
+
+/*container de seccion partidos*/
+#container-seccion-partidos {
+    display: none;
+    gap: 1rem; /*espaciado entre formulario y lista*/
+}
+
+/* grid interno para formulario y lista */
+#container-seccion-partidos[style*="display:block"] {
+    display: grid;
+    grid-template-columns: 2fr 3fr; /* dos columnas */
+    gap: 1rem;
+}
+
+/* formateo para todos los formularios*/
+form {
+    border: 1px solid #ccc;
+    padding: 1rem;
+    background: #fafafa;
+    border-radius: 4px;
+}
+
+/*Container de lista de partidos*/
+#container-lista-partidos{
+    border: 1px solid #ccc;
+    padding: 1rem;
     background: #fff;
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
-    text-align: center;
+    border-radius: 4px;
+    display: block;
 }
 
-@media (max-width: 600px) {
-    h1 {
-        font-size: 2rem;
-    }
-    p {
-        font-size: 1rem;
-        padding: 1rem;
-    }
+/*feedbacks*/
+#feedback-formulario-usuario,
+#feedback-formulario-partido {
+    margin-top: 1rem;
+    color: green;
 }

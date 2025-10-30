@@ -6,3 +6,9 @@ INSERT INTO Estadistica_Arquero(id_usuario, id_partido, goles_recibidos, atajada
 UPDATE Estadistica_Arquero SET goles_recibidos = $3, atajadas_clave= $4, saques_completados= $5
 WHERE id_usuario = $1 AND id_partido = $2
 RETURNING *;
+
+-- name: GetEstadisticaArquero :one
+SELECT * FROM Estadistica_Arquero WHERE id_usuario = $1 AND id_partido = $2;
+
+-- name: DeleteEstadisticaArquero :exec
+DELETE FROM Estadistica_Arquero WHERE id_usuario = $1 AND id_partido = $2;

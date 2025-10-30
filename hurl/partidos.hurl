@@ -74,7 +74,7 @@ jsonpath "$.fecha" == "2020-10-29T00:00:00Z"
 jsonpath "$.cancha" == "Nahuel_Nuevo"
 jsonpath "$.puntuacion" == 7
 
-#listar partidos
+#listar partidos de todos los users
 GET http://localhost:8080/partidos
 HTTP 200
 [Asserts]
