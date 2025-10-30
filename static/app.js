@@ -165,7 +165,6 @@ document.addEventListener('DOMContentLoaded', () => { //CREO UN EVENT LISTENER P
             eliminarPartido(target);
         } else if (target.classList.contains('boton-modificar-estadistica')) {
             mostrarFormularioModificacionEstadisticas(target);
-            //seguir maniana el evento de modificar estadistica. Tambien falta boton cancelar y boton modificar partido.
         } else if (target.classList.contains('boton-modificar-partido')) { //ACCION SOBRE BOTON MODIFICAR PARTIDO
             mostrarFormularioModificacionPartido(target);
         } else if (target.classList.contains('boton-cancelar-mod')) {
@@ -267,7 +266,7 @@ async function mostrarEstadisticasDePartido(boton){
             }
         );
         if (!response.ok) {
-            throw new Error(`No se encontraron estadisticas.`); //no puede suceder en teoria, pero bueno (REVISAR)
+            throw new Error(`No se encontraron estadisticas.`);
         } else {}
         const estadisticas = await response.json();
         divEstadistica.innerHTML = ''; //limpio el html (lo inicio mas bien)
@@ -391,7 +390,7 @@ async function modificarEstadisticasPartido(formulario){
             const error = await response.text();
             throw new Error(error);
         } else {
-            console.log("Modificacion exitosa. Recargando lista"); //consultar si debemos refrescar toda la lista o solo el elemento modificado
+            console.log("Modificacion exitosa. Recargando lista");
             cargarPartidos()
         }
     } catch (error) {
@@ -441,7 +440,7 @@ async function modificarPartido(formulario){
             const error = await response.text();
             throw new Error(error);
         }
-        console.log("Modificacion exitosa. Recargando lista"); //consultar si debemos refrescar toda la lista o solo el elemento modificado
+        console.log("Modificacion exitosa. Recargando lista");
         cargarPartidos()
     } catch (error) {
         divPartido.innerHTML = `Error al intentar modificar el partido: ${error.message}`;
