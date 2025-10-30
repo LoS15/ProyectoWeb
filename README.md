@@ -1,6 +1,8 @@
 # Instrucciones para iniciar la aplicacion (valido para TP3 y TP4):
 
-El script *runApp.sh* corre los 8 test de hurl que hicimos y deja corriendo ambos containers para probar la aplicacion.
+1. Debe crear un archivo .env que copie las mismas variables que estan presentes en el archivo *.env.sample*, colocando los valores que usted desea a esas variables. El unico valor que no debe modificar es el de *DB_HOST=db*, ya que esta configurado con ese nombre en el docker compose, y es la manera en la que los servicios se comunican.
+
+2. El script *runApp.sh* corre los 8 test de hurl que hicimos y deja corriendo ambos containers para probar la aplicacion.
 
 ## Como acceder al frontend:
 Para acceder a la pagina web, simplemente puede introducir esta URL en su navegador de preferencia: *http://localhost:8080/*
